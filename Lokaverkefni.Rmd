@@ -28,6 +28,10 @@ pre[class] {
 ```{r}
 library(tidyverse)
 library(dplyr)
+library(ggplot2)
+library(ggridges)
+library(data.table)
+library(gridExtra
 ```
 
 
@@ -51,4 +55,60 @@ data$age <- (as.numeric(data$yearkeypt)-data$byggar)
 nrow(data[data$age<0,])
 
 data <- select(data, -kdagur, -byggar)
+
+data$matssvaedi <- recode_factor(data$matssvaedi, `11`="Vesturbær", `20` = "Miðbær", `25`="Miðbær", `31`="Miðbær", `70`="Melar", `72`="Melar", `75`="Skerjafjörður", `80`="Hlíðar", `85`="Kringlan", `90`="Holt", `91`="Háaleiti", `100`="Vogar", `110`="Bryggjuhverfi", `120`="Grafarvogur", `130`="Grafarvogur", `140`="Grafarvogur", `150`="Breiðholt", `160`="Breiðholt", `161`="Breiðholt", `170`="Breiðholt", `180`="Grafarholt", `181`="Úlfarsdalur", `200`="Árbær", `210`="Árbær", `220`="Selás", `270`="Norðlingaholt", `280`="Fossvogur", `281`="Fossvogur", `282` ="Fossvogur", `283`="Fossvogur", `284`="Fossvogur", `290`="Kjalarnes",
+                                 `300`="Kóp:Vesturbær",`320`="Kóp:Austurbær",`330`="Kóp:Smárar", `340`="Kóp:Lindir", `350`="Kóp:Hvörf",`351`="Kóp:Kórar",
+                                 `400`="Seltjarnarnes", `500`="Garðabær", `510`="Garðabær", `511`="Garðabær", `520`="Grb:Sjáland", `530`="Grb:Akrar", `540`="Grb:Ásar", `550`="Garðabær", `560`="Grb:Arnarnes", `590`="Garðabær",`700`="Álftanes", `600`="Hafnarfjörður", `620`="Hfj:Holt", `630`="Hfj:Vellir", `640`="Hfj:Ásland", `650`="Hfj:Setberg", `660`="Hfj:Flensborg", `670`="Hfj:Vellir", `680`="Hfj:Holt", `800`="Mosfellsbær", `810`="Mosfellsbær", `820`="Mosfellsbær", `830`="Mosfellsbær", `840`="Mosfellsbær", `850`="Mosfellsbær", `890`="Mosfellsbær", `999`="Annað")
+ 
 ```
+
+## Exploratory Analysis
+```{r, fig.align='center'}
+#color theme
+ColorsDT <-  data.table(Group=LETTERS[1:50], Color=c("#e0bba8","#d6a78e","#cd9274", "#c37e59","#b86a41","#9d5b38","#834c2f","#693c25","#4e2d1c","#341e12","#efc699","#eab57a", "#e5a45b","#e1923c","#d88121","#b96e1c","#9a5c17","#7b4912","#5c370e","#3d2409","#d6bdb2", "#caa99a","#bd9583","#b1816c","#a36e56","#8c5e4a","#744e3d","#5d3f31","#462f25","#2e1f18", "#e8bda0","#e1a983","#da9566","#d48149","#ca6e2f","#ad5e28","#904e22","#733f1b","#562f14", "#391f0d","#d9bfae","#ceab96","#c3987d","#b88465","#aa714e","#926143","#7a5138","#61412d", "#493021","#302016"), key="Group")
+set.seed(4)
+
+#núvirði skoðað útfrá:
+#(1)svfn
+f1 <- data %>%
+  ggplot(aes(x=nuvirdi,y=svfn, fill=svfn)) +
+       geom_density_ridges_gradient() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), legend.position = "none") + 
+  ggtitle("Figure X: insert name") + xlim(c(0,100000)) + scale_fill_manual(values=sample(ColorsDT$Color)) + labs(y = " ", x = "Property Price")
+
+#(2)matssvaedi
+f2 <- data %>% 
+  ggplot(aes(x=nuvirdi,y=matssvaedi, fill=svfn)) +
+       geom_density_ridges_gradient() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), legend.position = "none") + 
+  ggtitle(" ") + xlim(c(0,100000)) + scale_fill_manual(values=sample(ColorsDT$Color)) + labs(y = " ", x = "Property Price")
+grid.arrange(f1,f2,nrow=1)
+
+#(3)yearkeypt
+ggplot(data) + geom_bar(aes(y=nuvirdi,x=yearkeypt, fill=yearkeypt), stat="summary", fun.y="mean", position = "dodge") + scale_fill_manual(values=sample(ColorsDT$Color)) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "gray"), legend.position = "none") + geom_hline(yintercept=mean(data$nuvirdi), col = '#7b4912', size=1) + ggtitle("Figure X: Insert name") + labs(x="Sales Year", y="Mean Property Price") + coord_flip()
+
+#(4)fj breytunar
+ff <- function(x){
+  ggplot(data, aes(y=nuvirdi,x=as.factor(x), fill=as.factor(x))) + geom_col()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), legend.position = "none") + 
+  ggtitle(" ") + ylim(c(0,100000)) + 
+scale_fill_manual(values=sample(ColorsDT$Color))
+}
+grid.arrange(ff(data$fjhaed)+ labs(x = "Floors", y = " "), ff(data$fjbilsk)+ labs(x = "Parking spaces", y = " "), ff(data$fjbkar)+ labs(x = "Baths", y = " "), ff(data$fjsturt)+ labs(x = "Showers", y = " "), ff(data$fjklos)+ labs(x = "Toilets", y = " "), ff(data$fjeld)+ labs(x = "Kitchens", y = " "), ff(data$fjherb)+ labs(x = "Rooms", y = " "), ff(data$fjstof)+ labs(x = "Living Rooms", y = " "), ff(data$fjgeym)+ labs(x = "Storage Rooms", y = " "))
+
+#(5)íbuðir með/án lyftu (bara fjölbýlishús)
+data %>% 
+  mutate(lyfta=ifelse(data$lyfta == 1, "Yes", "No")) %>%
+  filter(data$ibteg=="Fjölbýlishús") %>%
+  ggplot(aes(x=nuvirdi,y=lyfta, fill=lyfta)) +
+       geom_density_ridges_gradient() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), legend.position = "none") + 
+  ggtitle("Figure X: Property prices for apartment buildings with/witout an elevator") + xlim(c(0,100000)) + scale_fill_manual(values=sample(ColorsDT$Color)) + labs(y = " ", x = "Property Price")
+```
+
+
+
+
+
+
