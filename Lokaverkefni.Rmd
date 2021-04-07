@@ -36,7 +36,7 @@ In this assignment we will carry out an analysis of a dataset containing informa
 
 In the first part of the assignment we will explore the data visually. In the second part we will predict sale prices using x and x methods. In the third part we will predict the values of x (categorical variable) using the x and x methods. 
 
-The dataset contains many variables, some of which have been excluded from analysis. For this assignment we will focus on data concerning the Capital Region of Iceland. The resulting dataset contains approximately 35 thousand observations and 17 variables regarding housing prices, municipality, age of construction, property type and property area among other.
+The dataset contains many variables, some of which have been excluded from analysis. For this assignment we will focus on data concerning the Capital Region of Iceland. The resulting dataset contains approximately 35 thousand observations and 17 variables regarding housing prices, municipality, age of construction, property type and property area among other. We have included only properties that are single-family houses or apartment buildings. 
 
 ## Reading data and cleanup
 ```{r}
@@ -76,7 +76,8 @@ set.seed(4)
 f1 <- data %>% ggplot(aes(x=nuvirdi,y=svfn, fill=svfn)) +
   geom_density_ridges_gradient() +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), legend.position = "none") + 
-  ggtitle("Figure 1: Property price based on ") + xlim(c(0,100000)) + 
+  ggtitle("Figure 1: Property price based on municipality and neighbourhood") + 
+  xlim(c(0,100000)) + 
   scale_fill_manual(values=sample(ColorsDT$Color)) + 
   labs(y = " ", x = "Property Price")
 
@@ -89,43 +90,95 @@ f2 <- data %>% ggplot(aes(x=nuvirdi,y=matssvaedi, fill=svfn)) +
 grid.arrange(f1,f2,nrow=1)
 ```
 
-In figure 1 we see the property price based on the municipality on the one hand and neighbourhood on the other. Overall, the property prices seem to have a fairly normal distribution. 
+In figure 1 we see the property prices based on the municipality on the one hand, and neighbourhood on the other. Overall, the property prices seem to have a fairly normal distribution across the municipalities. Property prices in Reykjavík appear to be the lowest, perhaps because the properties are smaller. The prices for properties in two neighbourhoods in Garðabær and in Hlíðar appear to be, on average, higher than other neighbourhoods in our dataset. 
 
-```{r}
+```{r, fig.align = 'center'}
 #(3)yearkeypt
-ggplot(data) + geom_bar(aes(y=nuvirdi,x=yearkeypt, fill=yearkeypt), stat="summary", fun.y="mean", position = "dodge") + scale_fill_manual(values=sample(ColorsDT$Color)) +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "gray"), legend.position = "none") + geom_hline(yintercept=mean(data$nuvirdi), col = '#7b4912', size=1) + ggtitle("Figure X: Insert name") + labs(x="Sales Year", y="Mean Property Price") + coord_flip()
+ggplot(data) + geom_bar(aes(y=nuvirdi,x=yearkeypt, fill=yearkeypt), stat="summary", fun.y="mean", position = "dodge") +
+  scale_fill_manual(values=sample(ColorsDT$Color)) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "gray"), legend.position = "none") + 
+  geom_hline(yintercept=mean(data$nuvirdi), col = '#7b4912', size=1) + 
+  ggtitle("Figure 2: Mean property price by year of sale") + labs(x= "Sales year", y= "Mean Property Price") + 
+  coord_flip()
 ```
 
-```{r}
+In figure 2 we can see the mean property price by year of sale. The vertical line represents the mean property price over the years 2012 to 2018. Property prices have gradually increased over the years.  
+
+```{r, fig.align = 'center'}
 #(4)fj breytunar
 ff <- function(x){
-  ggplot(data, aes(y=nuvirdi,x=as.factor(x), fill=as.factor(x))) + geom_col()+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), legend.position = "none") + 
-  ggtitle(" ") + ylim(c(0,100000)) + 
-scale_fill_manual(values=sample(ColorsDT$Color))
+  ggplot(data, aes(y=nuvirdi,x=as.factor(x), fill=as.factor(x))) + 
+    geom_col() +
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), 
+          legend.position = "none") + 
+    ggtitle(" ") + ylim(c(0,100000)) + 
+    scale_fill_manual(values=sample(ColorsDT$Color))
 }
-grid.arrange(ff(data$fjhaed)+ labs(x = "Floors", y = " "), ff(data$fjbilsk)+ labs(x = "Parking spaces", y = " "), ff(data$fjbkar)+ labs(x = "Baths", y = " "), ff(data$fjsturt)+ labs(x = "Showers", y = " "), ff(data$fjklos)+ labs(x = "Toilets", y = " "), ff(data$fjeld)+ labs(x = "Kitchens", y = " "), ff(data$fjherb)+ labs(x = "Rooms", y = " "), ff(data$fjstof)+ labs(x = "Living Rooms", y = " "), ff(data$fjgeym)+ labs(x = "Storage Rooms", y = " "))
-
-#(5)íbuðir með/án lyftu (bara fjölbýlishús)
-data %>% 
-  mutate(lyfta=ifelse(data$lyfta == 1, "Yes", "No")) %>%
-  filter(data$ibteg=="Fjölbýlishús") %>%
-  ggplot(aes(x=nuvirdi,y=lyfta, fill=lyfta)) +
-       geom_density_ridges_gradient() +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), legend.position = "none") + 
-  ggtitle("Figure X: Property prices for apartment buildings with/witout an elevator") + xlim(c(0,100000)) + scale_fill_manual(values=sample(ColorsDT$Color)) + labs(y = " ", x = "Property Price")
+grid.arrange(ff(data$fjhaed)+ 
+               labs(x = "Floors", y = " "), ff(data$fjbilsk) + 
+               labs(x = "Parking spaces", y = " "), ff(data$fjbkar) + 
+               labs(x = "Baths", y = " "), ff(data$fjsturt) + 
+               labs(x = "Showers", y = " "), ff(data$fjklos) + 
+               labs(x = "Toilets", y = " "), ff(data$fjeld) + 
+               labs(x = "Kitchens", y = " "), ff(data$fjherb) + 
+               labs(x = "Rooms", y = " "), ff(data$fjstof) + 
+               labs(x = "Living Rooms", y = " "), ff(data$fjgeym) + 
+               labs(x = "Storage Rooms", y = " "))
 ```
 
-```{r}
+Here above we see plots of property price according to various property attributes. For example, properties that have 5 toilets are more expensive than those with fewer toilets, and properties with 3 kitchens appear to be the most expensive. 
+
+```{r, fig.align = 'center'}
 #(5)íbuðir með/án lyftu (bara fjölbýlishús)
-data %>% 
-  mutate(lyfta=ifelse(data$lyfta == 1, "Yes", "No")) %>%
-  filter(data$ibteg=="Fjölbýlishús") %>%
-  ggplot(aes(x=nuvirdi,y=lyfta, fill=lyfta)) +
-       geom_density_ridges_gradient() +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), legend.position = "none") + 
-  ggtitle("Figure X: Property prices for apartment buildings with/witout an elevator") + xlim(c(0,100000)) + scale_fill_manual(values=sample(ColorsDT$Color)) + labs(y = " ", x = "Property Price")
+# búum til nýtt gagnasafn sem inniheldur bara fjölbýlishús
+data_fjolbylishus <- data %>% filter(ibteg == 0) %>%
+  mutate(lyfta = ifelse(lyfta == 1, "Yes", "No"))
+
+  ggplot(data_fjolbylishus) + geom_bar(aes(x=nuvirdi,y=lyfta, fill=lyfta), stat= "summary", fun.y= "mean", position = "dodge") +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), 
+        legend.position = "none") + 
+  ggtitle("Figure 3: Property prices for apartment buildings with/without an elevator") + 
+  xlim(c(0, 40000)) + 
+  scale_fill_manual(values=sample(ColorsDT$Color)) + 
+  labs(y = " ", x = "Property Price")
 ```
 
+LAGA - súlurnar minnka þegar maður minnkar x-ásinn. Fara alltaf neðar og neðar af einhverri ástæðu. 
 
+In figure 3 we see the average property price of apartment buildings based on whether the building has an elevator or not. Apartment buildings with elevators are on average more expensive.  
+
+```{r, fig.align = 'center'}
+# verð út frá aldri byggingar og tegund húsnæðis.
+f3 <- data %>% 
+  mutate(ibteg=ifelse(data$ibteg == 1, "Single-family house", "Apartment building"))
+
+ggplot(f3, aes(x=nuvirdi,y=age, group = ibteg, color = ibteg)) +
+  geom_smooth() + 
+  ggtitle("Figure 4: Property price based on age and type of property") +
+  labs(x = "Property price", y = "Age of property") + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank()) +
+   xlim(c(0,100000)) + 
+  scale_fill_manual(values = sample(ColorsDT$Color)) + 
+  scale_color_manual(name = "Type of property",values = sample(ColorsDT$Color))
+```
+
+In figure 4 we have the average property price based on age and type of property. Single-family houses are on average more expensive than apartment buildings and the older the property the more inexpensive it is. Age appears to be irrelevant for single-family houses priced 50 million isk and above.   
+
+```{r, fig.align = 'center'}
+# price per square meter by municipality
+data <- data %>% 
+  mutate(fermetraverd = nuvirdi/ibm2)
+
+ggplot(data, aes(x = fermetraverd, y = svfn, fill = svfn)) +
+  geom_density_ridges_gradient() +
+  labs(x= "Price per square meter", y = "Municipality") +
+  ggtitle("Figure 5: Price per square meter by municipality") + 
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        panel.background = element_blank(), legend.position = "none") + 
+  scale_fill_manual(values = sample(ColorsDT$Color)) + 
+  scale_color_manual(name = "Type of property",values=sample(ColorsDT$Color)) +
+  xlim(c(0, 75))
+```
+
+In figure 5 we see price per square meter by municipality. We can gather that prices per square meter are a bit higher for properties in Garðabær and Seltjarnarnes (and Mosfellsbær to a degree) than for properties in the other municipalities. 
