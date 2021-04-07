@@ -28,6 +28,9 @@ pre[class] {
 ```{r}
 library(tidyverse)
 library(dplyr)
+library(ggplot2)
+library(ggridges)
+library(data.table)
 ```
 
 
@@ -51,4 +54,16 @@ data$age <- (as.numeric(data$yearkeypt)-data$byggar)
 nrow(data[data$age<0,])
 
 data <- select(data, -kdagur, -byggar)
+
+#litirnir
+ColorsDT <-  data.table(Group=LETTERS[1:5], Color=c("#5f3722", "#e9af6f", "#c9a899", "#a55a27", "#84583d", "#b86a41"), key="Group")
+
+data %>%
+  ggplot(aes(x=nuvirdi,y=svfn, fill=svfn)) +
+       geom_density_ridges_gradient() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), legend.position = "none") + 
+  ggtitle("Figure X: insert name") + xlim(c(0,100000)) + scale_fill_manual(values=ColorsDT$Color) + labs(y = " ", x = "Property Price")
+ 
+ggplot(data) + geom_bar(aes(y=nuvirdi,x=year, fill=yearkeypt), stat="summary", position = "dodge", fun.y=median) + scale_fill_manual(values=ColorsDT$Color) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "gray"), legend.position = "none") + geom_hline(yintercept=median(data$nuvirdi), col = '#7b4912', size=1) + ggtitle("Figure X: Insert name") + labs(x="Sales Year", y="Median Property Price") + coord_flip()
 ```
