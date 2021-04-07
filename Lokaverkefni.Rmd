@@ -1,0 +1,47 @@
+---
+title: "Lokaverkefni nafn hér"
+author: "Bergrós Skúladóttir, Indriði Arnaldsson & Íris Aníta Eyþórsdóttir"
+date: "11/12/2020"
+output:
+  prettydoc::html_pretty:
+    theme : hpstr
+    highlight: github
+    toc: true
+    toc_depth: 2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = F, warning = F, error = F)
+```
+
+```{css, echo=FALSE, class.output="scroll-100"}
+.scroll-100 {
+  max-height: 300px;
+  overflow-y: auto;
+  bakground-color:inherit;
+}
+
+pre[class] {
+  max-height: 160px;
+}
+```
+
+```{r}
+library(tidyverse)
+```
+
+
+## Reading data and cleanup
+```{r}
+data <- read_delim("https://www.skra.is/library/Samnyttar-skrar-/Fyrirtaeki-stofnanir/Fasteignamat-2019/gagnasafn_ib_2018.csv", ";", escape_double = FALSE, locale = locale(encoding = "ISO-8859-1"),
+                                     trim_ws = TRUE)
+
+data <- data %>% select(nuvirdi, teg_eign, byggar, lyfta, ibm2, fjhaed, fjbilsk, fjbkar, fjsturt, fjklos, fjeld, fjherb, fjstof, fjgeym, matssvaedi, ibteg, svfn) %>%
+  filter(matssvaedi < 1000) %>%
+  mutate(lyfta = ifelse(lyfta >= 1, 1, 0)) %>%
+  mutate(ibteg = ifelse(ibteg == 11, 1, 0)) %>%
+  mutate_at("lyfta", factor) %>%
+  mutate_at("matssvaedi", as.character) %>%
+  mutate_at("ibteg", factor)
+```
+
