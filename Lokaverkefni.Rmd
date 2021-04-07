@@ -28,6 +28,7 @@ pre[class] {
 
 ```{r}
 library(tidyverse)
+library(dplyr)
 ```
 
 
@@ -36,12 +37,19 @@ library(tidyverse)
 data <- read_delim("https://www.skra.is/library/Samnyttar-skrar-/Fyrirtaeki-stofnanir/Fasteignamat-2019/gagnasafn_ib_2018.csv", ";", escape_double = FALSE, locale = locale(encoding = "ISO-8859-1"),
                                      trim_ws = TRUE)
 
-data <- data %>% select(nuvirdi, teg_eign, byggar, lyfta, ibm2, fjhaed, fjbilsk, fjbkar, fjsturt, fjklos, fjeld, fjherb, fjstof, fjgeym, matssvaedi, ibteg, svfn) %>%
+data <- data %>% select(kdagur, nuvirdi, teg_eign, byggar, lyfta, ibm2, fjhaed, fjbilsk, fjbkar, fjsturt, fjklos, fjeld, fjherb, fjstof, fjgeym, matssvaedi, ibteg, svfn) %>%
   filter(matssvaedi < 1000) %>%
   mutate(lyfta = ifelse(lyfta >= 1, 1, 0)) %>%
   mutate(ibteg = ifelse(ibteg == 11, 1, 0)) %>%
   mutate_at("lyfta", factor) %>%
   mutate_at("matssvaedi", as.character) %>%
   mutate_at("ibteg", factor)
+  
+data$svfn <- recode_factor(data$svfn, `0000`="Reykjavik", `1000`="Kopavogur", `1100`="Seltjarnarnes",`1300`="Gardabaer", `1400`="Hafnarfjordur", `1604`="Mosfellsbaer")
+data$kdagur <- as.Date(data$kdagur, format = "%d.%m.%Y")
+data$year <- format(data$kdagur, format="%Y")
+data$age <- (as.numeric(data$year)-data$byggar)
+#number of negative values for property age - properties bought unfinished 
+nrow(data[data$age<0,])
 ```
 
