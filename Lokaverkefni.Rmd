@@ -1,6 +1,6 @@
 ---
 title: "Lokaverkefni nafn hér"
-author: "Bergrós Skúladóttir, Indriði Arnaldsson : ina23@hi.is & Íris Aníta Eyþórsdóttir"
+author: "Bergrós Skúladóttir, Indriði Arnaldsson & Íris Aníta Eyþórsdóttir"
 date: "11/12/2020"
 output:
   prettydoc::html_pretty:
