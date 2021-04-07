@@ -1,7 +1,6 @@
 ---
 title: "Lokaverkefni nafn hér"
 author: "Bergrós Skúladóttir, Indriði Arnaldsson & Íris Aníta Eyþórsdóttir"
-date: "11/12/2020"
 output:
   prettydoc::html_pretty:
     theme : hpstr
@@ -11,7 +10,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = F, warning = F, error = F)
+knitr::opts_chunk$set(echo = F, message = F, warning = F, error = F)
 ```
 
 ```{css, echo=FALSE, class.output="scroll-100"}
@@ -26,14 +25,18 @@ pre[class] {
 ```
 
 ```{r}
-library(tidyverse)
-library(dplyr)
-library(ggplot2)
+library(tidyverse) #dplyr og ggplot2 tilheyra tidyverse
 library(ggridges)
 library(data.table)
-library(gridExtra
+library(gridExtra)
 ```
 
+## Introduction 
+In this assignment we will carry out an analysis of a dataset containing information of about 40 thousand real estates sold in Iceland from 2008 to 2018. The origin of the data can be traced to the National Registry of Iceland which performs an evaluation of housing prices every year. 
+
+In the first part of the assignment we will explore the data visually. In the second part we will predict sale prices using x and x methods. In the third part we will predict the values of x (categorical variable) using the x and x methods. 
+
+The dataset contains many variables, some of which have been excluded from analysis. For this assignment we will focus on data concerning the Capital Region of Iceland. The resulting dataset contains approximately 35 thousand observations and 17 variables regarding housing prices, municipality, age of construction, property type and property area among other.
 
 ## Reading data and cleanup
 ```{r}
@@ -53,41 +56,48 @@ data$yearkeypt <- format(data$kdagur, format="%Y")
 data$age <- (as.numeric(data$yearkeypt)-data$byggar)
 #number of negative values for property age - properties bought unfinished 
 nrow(data[data$age<0,])
-
 data <- select(data, -kdagur, -byggar)
-
 data$matssvaedi <- recode_factor(data$matssvaedi, `11`="Vesturbær", `20` = "Miðbær", `25`="Miðbær", `31`="Miðbær", `70`="Melar", `72`="Melar", `75`="Skerjafjörður", `80`="Hlíðar", `85`="Kringlan", `90`="Holt", `91`="Háaleiti", `100`="Vogar", `110`="Bryggjuhverfi", `120`="Grafarvogur", `130`="Grafarvogur", `140`="Grafarvogur", `150`="Breiðholt", `160`="Breiðholt", `161`="Breiðholt", `170`="Breiðholt", `180`="Grafarholt", `181`="Úlfarsdalur", `200`="Árbær", `210`="Árbær", `220`="Selás", `270`="Norðlingaholt", `280`="Fossvogur", `281`="Fossvogur", `282` ="Fossvogur", `283`="Fossvogur", `284`="Fossvogur", `290`="Kjalarnes",
                                  `300`="Kóp:Vesturbær",`320`="Kóp:Austurbær",`330`="Kóp:Smárar", `340`="Kóp:Lindir", `350`="Kóp:Hvörf",`351`="Kóp:Kórar",
                                  `400`="Seltjarnarnes", `500`="Garðabær", `510`="Garðabær", `511`="Garðabær", `520`="Grb:Sjáland", `530`="Grb:Akrar", `540`="Grb:Ásar", `550`="Garðabær", `560`="Grb:Arnarnes", `590`="Garðabær",`700`="Álftanes", `600`="Hafnarfjörður", `620`="Hfj:Holt", `630`="Hfj:Vellir", `640`="Hfj:Ásland", `650`="Hfj:Setberg", `660`="Hfj:Flensborg", `670`="Hfj:Vellir", `680`="Hfj:Holt", `800`="Mosfellsbær", `810`="Mosfellsbær", `820`="Mosfellsbær", `830`="Mosfellsbær", `840`="Mosfellsbær", `850`="Mosfellsbær", `890`="Mosfellsbær", `999`="Annað")
- 
 ```
 
 ## Exploratory Analysis
+
+In this part we will explore the data. Property price is an important variable in our dataset and we are interested in exploring the relationship it has with the other variables in our data set. 
+
 ```{r, fig.align='center'}
 #color theme
 ColorsDT <-  data.table(Group=LETTERS[1:50], Color=c("#e0bba8","#d6a78e","#cd9274", "#c37e59","#b86a41","#9d5b38","#834c2f","#693c25","#4e2d1c","#341e12","#efc699","#eab57a", "#e5a45b","#e1923c","#d88121","#b96e1c","#9a5c17","#7b4912","#5c370e","#3d2409","#d6bdb2", "#caa99a","#bd9583","#b1816c","#a36e56","#8c5e4a","#744e3d","#5d3f31","#462f25","#2e1f18", "#e8bda0","#e1a983","#da9566","#d48149","#ca6e2f","#ad5e28","#904e22","#733f1b","#562f14", "#391f0d","#d9bfae","#ceab96","#c3987d","#b88465","#aa714e","#926143","#7a5138","#61412d", "#493021","#302016"), key="Group")
 set.seed(4)
-
 #núvirði skoðað útfrá:
+
 #(1)svfn
-f1 <- data %>%
-  ggplot(aes(x=nuvirdi,y=svfn, fill=svfn)) +
-       geom_density_ridges_gradient() +
+f1 <- data %>% ggplot(aes(x=nuvirdi,y=svfn, fill=svfn)) +
+  geom_density_ridges_gradient() +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), legend.position = "none") + 
-  ggtitle("Figure X: insert name") + xlim(c(0,100000)) + scale_fill_manual(values=sample(ColorsDT$Color)) + labs(y = " ", x = "Property Price")
+  ggtitle("Figure 1: Property price based on ") + xlim(c(0,100000)) + 
+  scale_fill_manual(values=sample(ColorsDT$Color)) + 
+  labs(y = " ", x = "Property Price")
 
 #(2)matssvaedi
-f2 <- data %>% 
-  ggplot(aes(x=nuvirdi,y=matssvaedi, fill=svfn)) +
-       geom_density_ridges_gradient() +
+f2 <- data %>% ggplot(aes(x=nuvirdi,y=matssvaedi, fill=svfn)) +
+  geom_density_ridges_gradient() +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), legend.position = "none") + 
-  ggtitle(" ") + xlim(c(0,100000)) + scale_fill_manual(values=sample(ColorsDT$Color)) + labs(y = " ", x = "Property Price")
+  ggtitle(" ") + xlim(c(0,100000)) + scale_fill_manual(values=sample(ColorsDT$Color)) + 
+  labs(y = " ", x = "Property Price")
 grid.arrange(f1,f2,nrow=1)
+```
 
+In figure 1 we see the property price based on the municipality on the one hand and neighbourhood on the other. Overall, the property prices seem to have a fairly normal distribution. 
+
+```{r}
 #(3)yearkeypt
 ggplot(data) + geom_bar(aes(y=nuvirdi,x=yearkeypt, fill=yearkeypt), stat="summary", fun.y="mean", position = "dodge") + scale_fill_manual(values=sample(ColorsDT$Color)) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "gray"), legend.position = "none") + geom_hline(yintercept=mean(data$nuvirdi), col = '#7b4912', size=1) + ggtitle("Figure X: Insert name") + labs(x="Sales Year", y="Mean Property Price") + coord_flip()
+```
 
+```{r}
 #(4)fj breytunar
 ff <- function(x){
   ggplot(data, aes(y=nuvirdi,x=as.factor(x), fill=as.factor(x))) + geom_col()+
@@ -107,8 +117,15 @@ data %>%
   ggtitle("Figure X: Property prices for apartment buildings with/witout an elevator") + xlim(c(0,100000)) + scale_fill_manual(values=sample(ColorsDT$Color)) + labs(y = " ", x = "Property Price")
 ```
 
-
-
-
+```{r}
+#(5)íbuðir með/án lyftu (bara fjölbýlishús)
+data %>% 
+  mutate(lyfta=ifelse(data$lyfta == 1, "Yes", "No")) %>%
+  filter(data$ibteg=="Fjölbýlishús") %>%
+  ggplot(aes(x=nuvirdi,y=lyfta, fill=lyfta)) +
+       geom_density_ridges_gradient() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), legend.position = "none") + 
+  ggtitle("Figure X: Property prices for apartment buildings with/witout an elevator") + xlim(c(0,100000)) + scale_fill_manual(values=sample(ColorsDT$Color)) + labs(y = " ", x = "Property Price")
+```
 
 
