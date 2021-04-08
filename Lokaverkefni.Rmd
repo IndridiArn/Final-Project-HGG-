@@ -25,10 +25,13 @@ pre[class] {
 ```
 
 ```{r}
-library(tidyverse) #dplyr og ggplot2 tilheyra tidyverse
+library(tidyverse)
 library(ggridges)
 library(data.table)
 library(gridExtra)
+library(corrplot)
+library(kableExtra)
+options(scipen = 999)
 ```
 
 ## Introduction 
@@ -59,7 +62,7 @@ nrow(data[data$age<0,])
 data <- select(data, -kdagur, -byggar)
 data$matssvaedi <- recode_factor(data$matssvaedi, `11`="Vesturbær", `20` = "Miðbær", `25`="Miðbær", `31`="Miðbær", `70`="Melar", `72`="Melar", `75`="Skerjafjörður", `80`="Hlíðar", `85`="Kringlan", `90`="Holt", `91`="Háaleiti", `100`="Vogar", `110`="Bryggjuhverfi", `120`="Grafarvogur", `130`="Grafarvogur", `140`="Grafarvogur", `150`="Breiðholt", `160`="Breiðholt", `161`="Breiðholt", `170`="Breiðholt", `180`="Grafarholt", `181`="Úlfarsdalur", `200`="Árbær", `210`="Árbær", `220`="Selás", `270`="Norðlingaholt", `280`="Fossvogur", `281`="Fossvogur", `282` ="Fossvogur", `283`="Fossvogur", `284`="Fossvogur", `290`="Kjalarnes",
                                  `300`="Kóp:Vesturbær",`320`="Kóp:Austurbær",`330`="Kóp:Smárar", `340`="Kóp:Lindir", `350`="Kóp:Hvörf",`351`="Kóp:Kórar",
-                                 `400`="Seltjarnarnes", `500`="Garðabær", `510`="Garðabær", `511`="Garðabær", `520`="Grb:Sjáland", `530`="Grb:Akrar", `540`="Grb:Ásar", `550`="Garðabær", `560`="Grb:Arnarnes", `590`="Garðabær",`700`="Álftanes", `600`="Hafnarfjörður", `620`="Hfj:Holt", `630`="Hfj:Vellir", `640`="Hfj:Ásland", `650`="Hfj:Setberg", `660`="Hfj:Flensborg", `670`="Hfj:Vellir", `680`="Hfj:Holt", `800`="Mosfellsbær", `810`="Mosfellsbær", `820`="Mosfellsbær", `830`="Mosfellsbær", `840`="Mosfellsbær", `850`="Mosfellsbær", `890`="Mosfellsbær", `999`="Annað")
+                                 `400`="Seltjarnarnes", `500`="Garðabær", `510`="Garðabær", `511`="Garðabær", `520`="Grb:Sjáland", `530`="Grb:Akrar", `540`="Grb:Ásar", `550`="Garðabær", `560`="Grb:Arnarnes", `590`="Garðabær",`700`="Álftanes", `600`="Hafnarfjörður", `620`="Hfj:Holt", `630`="Hfj:Vellir", `640`="Hfj:Ásland", `650`="Hfj:Setberg", `660`="Hfj:Flensborg", `670`="Hfj:Vellir", `680`="Hfj:Holt", `800`="Mosfellsbær", `810`="Mosfellsbær", `820`="Mosfellsbær", `830`="Mosfellsbær", `840`="Mosfellsbær", `850`="Mosfellsbær", `890`="Mosfellsbær", `999`="Kópavogur")
 ```
 
 ## Exploratory Analysis
@@ -76,44 +79,53 @@ set.seed(4)
 f1 <- data %>% ggplot(aes(x=nuvirdi,y=svfn, fill=svfn)) +
   geom_density_ridges_gradient() +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), legend.position = "none") + 
-  ggtitle("Figure 1: Property price based on municipality and neighbourhood") + 
   xlim(c(0,100000)) + 
-  scale_fill_manual(values=sample(ColorsDT$Color)) + 
+  scale_fill_manual(values=ColorsDT$Color) + 
   labs(y = " ", x = "Property Price")
 
 #(2)matssvaedi
 f2 <- data %>% ggplot(aes(x=nuvirdi,y=matssvaedi, fill=svfn)) +
   geom_density_ridges_gradient() +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), legend.position = "none") + 
-  ggtitle(" ") + xlim(c(0,100000)) + scale_fill_manual(values=sample(ColorsDT$Color)) + 
+  ggtitle(" ") + xlim(c(0,100000)) + scale_fill_manual(values=ColorsDT$Color) + 
   labs(y = " ", x = "Property Price")
-grid.arrange(f1,f2,nrow=1)
+grid.arrange(f1,f2,nrow=1,top="Figure 1: Property price based on municipality and neighbourhood")
 ```
 
 In figure 1 we see the property prices based on the municipality on the one hand, and neighbourhood on the other. Overall, the property prices seem to have a fairly normal distribution across the municipalities. Property prices in Reykjavík appear to be the lowest, perhaps because the properties are smaller. The prices for properties in two neighbourhoods in Garðabær and in Hlíðar appear to be, on average, higher than other neighbourhoods in our dataset. 
 
 ```{r, fig.align = 'center'}
 #(3)yearkeypt
-ggplot(data) + geom_bar(aes(y=nuvirdi,x=yearkeypt, fill=yearkeypt), stat="summary", fun.y="mean", position = "dodge") +
-  scale_fill_manual(values=sample(ColorsDT$Color)) +
+y1 <- data %>%
+  group_by(yearkeypt) %>%
+  summarise(nuvirdi=mean(nuvirdi)) %>%
+  ggplot() + geom_bar(aes(y=nuvirdi,x=yearkeypt, fill=yearkeypt), stat="identity", position = "dodge") +
+  scale_fill_manual(values=ColorsDT$Color) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "gray"), legend.position = "none") + 
-  geom_hline(yintercept=mean(data$nuvirdi), col = '#7b4912', size=1) + 
-  ggtitle("Figure 2: Mean property price by year of sale") + labs(x= "Sales year", y= "Mean Property Price") + 
-  coord_flip()
+  geom_hline(yintercept=mean(data$nuvirdi), col = '#7b4912', size=1) + labs(x= "Sales year", y= "Mean Property Price") + coord_flip()
+y2 <- data %>% ggplot(aes(x=nuvirdi,y=yearkeypt, fill=yearkeypt)) +
+  geom_density_ridges_gradient() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), legend.position = "none") + 
+  ggtitle(" ") + xlim(c(0,100000)) + scale_fill_manual(values=ColorsDT$Color) + 
+  labs(y = " ", x = "Property Price")
+grid.arrange(y1,y2,nrow=1, top = "Figure 2: Property price by year of sale")
 ```
 
-In figure 2 we can see the mean property price by year of sale. The vertical line represents the mean property price over the years 2012 to 2018. Property prices have gradually increased over the years.  
+In figure 2 we can see the mean property price by year of sale. The vertical line represents the mean property price over the years 2012 to 2018 ($\mu \approx$ `r round(mean(data$nuvirdi))`). Property prices have gradually increased over the years.  
 
 ```{r, fig.align = 'center'}
 #(4)fj breytunar
 ff <- function(x){
-  ggplot(data, aes(y=nuvirdi,x=as.factor(x), fill=as.factor(x))) + 
+data %>%
+  group_by(bla = as.factor(x)) %>%
+  summarise(price = mean(nuvirdi)) %>% 
+   mutate(Label=paste0(round(price/10000,2), "m")) %>%
+  ggplot(aes(y=price,x=bla, fill=bla)) + 
     geom_col() +
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), 
-          legend.position = "none") + 
-    ggtitle(" ") + ylim(c(0,100000)) + 
-    scale_fill_manual(values=sample(ColorsDT$Color))
-}
+          legend.position = "none") + ylim(c(0,100000)) + 
+    scale_fill_manual(values=sample(ColorsDT$Color)) + geom_text(aes(label=Label), nudge_y = 5)
+    }
 grid.arrange(ff(data$fjhaed)+ 
                labs(x = "Floors", y = " "), ff(data$fjbilsk) + 
                labs(x = "Parking spaces", y = " "), ff(data$fjbkar) + 
@@ -123,8 +135,9 @@ grid.arrange(ff(data$fjhaed)+
                labs(x = "Kitchens", y = " "), ff(data$fjherb) + 
                labs(x = "Rooms", y = " "), ff(data$fjstof) + 
                labs(x = "Living Rooms", y = " "), ff(data$fjgeym) + 
-               labs(x = "Storage Rooms", y = " "))
+               labs(x = "Storage Rooms", y = " "), top="Figure 3: Mean Property Price by various elements")
 ```
+LAGA - uppsetninguna i grid.arrange og labels.. 
 
 Here above we see plots of property price according to various property attributes. For example, properties that have 5 toilets are more expensive than those with fewer toilets, and properties with 3 kitchens appear to be the most expensive. 
 
@@ -132,18 +145,29 @@ Here above we see plots of property price according to various property attribut
 #(5)íbuðir með/án lyftu (bara fjölbýlishús)
 # búum til nýtt gagnasafn sem inniheldur bara fjölbýlishús
 data_fjolbylishus <- data %>% filter(ibteg == 0) %>%
-  mutate(lyfta = ifelse(lyfta == 1, "Yes", "No"))
+  mutate(lyfta = ifelse(lyfta == 1, "Yes", "No")) %>%
+  group_by(lyfta,svfn) %>%
+  summarise(nuvirdi=mean(nuvirdi))
 
-  ggplot(data_fjolbylishus) + geom_bar(aes(x=nuvirdi,y=lyfta, fill=lyfta), stat= "summary", fun.y= "mean", position = "dodge") +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), 
-        legend.position = "none") + 
-  ggtitle("Figure 3: Property prices for apartment buildings with/without an elevator") + 
-  xlim(c(0, 40000)) + 
+data_fjolbylishus %>%
+  ggplot() + geom_bar(aes(x=nuvirdi,y=svfn, fill=lyfta), stat= "identity", position = "dodge") +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank()) + 
+  ggtitle("Figure 3: Mean property prices for apartment buildings with/without an elevator by area") + 
+  xlim(c(0, 45000)) + 
   scale_fill_manual(values=sample(ColorsDT$Color)) + 
-  labs(y = " ", x = "Property Price")
+  labs(y = " ", x = "Property Price") + coord_flip()
+
+
+datt <- data_fjolbylishus %>%
+  pivot_wider(names_from = svfn, values_from=nuvirdi)
+dat <- datt[-1]
+Heild <- apply(dat,2,sum)
+mism <- c(dat[2,])-(dat[1,])
+tt <- paste(round((mism)/Heild,2)*100,"%")
+kable(t(tt), col.names = c("RVK","KÓP","SEL","GRB","HFJ","MOS"), caption = "Table 1: Percentage increase in apartment price by having an elevator") %>% kable_styling(full_width = F)
 ```
 
-LAGA - súlurnar minnka þegar maður minnkar x-ásinn. Fara alltaf neðar og neðar af einhverri ástæðu. 
+LAGA - setti þetta bara upp í töflu því mér datt í hug að gætum gert eitthvað sniðugt við þessar upplýsingar en veit ekki nákvæmlega hvað (setja inn sem label a myndina? eða tala um í texta bara..)
 
 In figure 3 we see the average property price of apartment buildings based on whether the building has an elevator or not. Apartment buildings with elevators are on average more expensive.  
 
@@ -182,3 +206,75 @@ ggplot(data, aes(x = fermetraverd, y = svfn, fill = svfn)) +
 ```
 
 In figure 5 we see price per square meter by municipality. We can gather that prices per square meter are a bit higher for properties in Garðabær and Seltjarnarnes (and Mosfellsbær to a degree) than for properties in the other municipalities. 
+
+```{r}
+#Corrplot allar numeric breytur
+da <- data %>%
+  dplyr::select(where(is.numeric))
+colnames(da) <- c("Pr.Price","Area","Floors","Parking","Baths","Showers","Toilets","Kitchens","Rooms","Liv.r.","Storage","Age","Sqm.Price")
+corrplot.mixed(cor(da[-12]), lower.col = "#d88121", number.cex=0.7, tl.pos = "lt", upper.col = "#8c5e4a", order="hclust", tl.col="#341e12", tl.cex=0.7)
+```
+LAGA - title labels
+
+
+```{r}
+set.seed(4)
+library(glmnet)
+
+x <- model.matrix(nuvirdi~., data)[,-1]
+y <- data$nuvirdi
+grid <- 10^seq(2,-4, by= -.10)
+train <- sample(1:nrow(x),nrow(x)*0.7)
+x.test <- (-train)
+y.test <- y[x.test]
+
+lasso.cv <- cv.glmnet(x[train,],
+                      y[train],
+                      alpha=1,
+                      lambda = grid,
+                      standardize=T,
+                      nfolds=10)
+bestlam <- lasso.cv$lambda.min 
+bestlam
+data.frame(lambda = lasso.cv$lambda, 
+           cv.mse = lasso.cv$cvm, 
+           nonzero = lasso.cv$nzero) %>%
+  ggplot(aes(x = lambda, y = cv.mse, col = ifelse(lambda==bestlam, "#d88121", "#c3987d"))) + geom_point() + 
+  geom_line() +
+  scale_x_continuous(trans = 'log10') + 
+  scale_y_continuous(trans = 'log10', labels = scales::comma_format()) + 
+  theme(legend.position = "bottom") + 
+  scale_color_identity() +
+  labs(x = "Lambda", 
+       y = "Cross-Validation MSE", 
+       col = "Non-Zero Coefficients:", 
+       title = "10-Fold CV Lasso Lambda Selection")+ 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        panel.background = element_blank(), legend.position = "none")
+```
+
+```{r}
+library(reshape2)
+lasso.mod <- glmnet(x[train,],
+                    y[train],
+                    alpha=1,
+                    lambda = bestlam,
+                    standardize = T)
+beta <- coef(lasso.mod)
+plot <- as.data.frame(as.matrix(beta))
+plot$coef <- row.names(plot)
+plot <- reshape2::melt(plot, id="coef")
+plot$variable <- as.numeric(gsub("s","",plot$variable))
+plot$lambda <- lasso.mod$lambda[plot$variable+1]
+
+plot[-1,] %>%
+  filter(value>0) %>%
+  ggplot(aes(value,reorder(coef,value), col=coef)) + geom_point(show.legend = F)+ 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        panel.background = element_blank(), legend.position = "none") + 
+  scale_fill_manual(values = sample(ColorsDT$Color)) + 
+  scale_color_manual(name = "Type of property",values=sample(ColorsDT$Color)) + labs(x="Coefficient", y=" ") + ggtitle("Figure X: Predictors with non-zero Lasso coefficients")
+  
+  mean((plot$value-data$nuvirdi)^2)
+```
+
