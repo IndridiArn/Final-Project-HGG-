@@ -65,9 +65,9 @@ data$age <- (as.numeric(data$yearkeypt)-data$byggar)
 #number of negative values for property age - properties bought unfinished 
 nrow(data[data$age<0,])
 data <- select(data, -kdagur, -byggar)
-data$matssvaedi <- recode_factor(data$matssvaedi, `11`="Vesturbær", `20` = "Miðbær", `25`="Miðbær", `31`="Miðbær", `70`="Melar", `72`="Melar", `75`="Skerjafjörður", `80`="Hlíðar", `85`="Kringlan", `90`="Holt", `91`="Háaleiti", `100`="Vogar", `110`="Bryggjuhverfi", `120`="Grafarvogur", `130`="Grafarvogur", `140`="Grafarvogur", `150`="Breiðholt", `160`="Breiðholt", `161`="Breiðholt", `170`="Breiðholt", `180`="Grafarholt", `181`="Úlfarsdalur", `200`="Árbær", `210`="Árbær", `220`="Selás", `270`="Norðlingaholt", `280`="Fossvogur", `281`="Fossvogur", `282` ="Fossvogur", `283`="Fossvogur", `284`="Fossvogur", `290`="Kjalarnes",
+data$matssvaedi <- recode_factor(data$matssvaedi, `11`="Rvk:Vesturbær", `20` = "Rvk:Miðbær", `25`="Rvk:Miðbær", `31`="Rvk:Miðbær", `70`="Rvk:Vesturbær", `72`="Rvk:Vesturbær", `75`="Rvk:Vesturbær", `80`="Rvk:Hlíðar", `85`="Rvk:Bústaðarhverfi", `90`="Rvk:Laugardalur", `91`="Rvk:Bústaðarhverfi", `100`="Rvk:Laugardalur", `110`="Rvk:Grafarvogur", `120`="Rvk:Grafarvogur", `130`="Rvk:Grafarvogur", `140`="Rvk:Grafarvogur", `150`="Rvk:Breiðholt", `160`="Rvk:Breiðholt", `161`="Rvk:Breiðholt", `170`="Rvk:Breiðholt", `180`="Rvk:Grafarholt", `181`="Rvk:Grafarholt", `200`="Rvk:Árbær", `210`="Rvk:Árbær", `220`="Rvk:Árbær", `270`="Rvk:Árbær", `280`="Rvk:Bústaðarhverfi", `281`="Rvk:Bústaðarhverfi", `282` ="Rvk:Bústaðarhverfi", `283`="Rvk:Bústaðarhverfi", `284`="Rvk:Bústaðarhverfi", `290`="Rvk:Kjalarnes",
                                  `300`="Kóp:Vesturbær",`320`="Kóp:Austurbær",`330`="Kóp:Smárar", `340`="Kóp:Lindir", `350`="Kóp:Hvörf",`351`="Kóp:Kórar",
-                                 `400`="Seltjarnarnes", `500`="Garðabær", `510`="Garðabær", `511`="Garðabær", `520`="Grb:Sjáland", `530`="Grb:Akrar", `540`="Grb:Ásar", `550`="Garðabær", `560`="Grb:Arnarnes", `590`="Garðabær",`700`="Álftanes", `600`="Hafnarfjörður", `620`="Hfj:Holt", `630`="Hfj:Vellir", `640`="Hfj:Ásland", `650`="Hfj:Setberg", `660`="Hfj:Flensborg", `670`="Hfj:Vellir", `680`="Hfj:Holt", `800`="Mosfellsbær", `810`="Mosfellsbær", `820`="Mosfellsbær", `830`="Mosfellsbær", `840`="Mosfellsbær", `850`="Mosfellsbær", `890`="Mosfellsbær", `999`="Kópavogur")
+                                 `400`="Seltjarnarnes", `500`="Grb:Miðbær", `510`="Grb:Ásar", `511`="Grb:Arnarnes", `520`="Grb:Sjáland", `530`="Grb:Hraunholt", `540`="Grb:Arnarnes", `550`="Grb:Urriðarholt", `560`="Grb:Flatir", `590`="Grb:Annað",`700`="Grb:Álftanes", `600`="Hfj:Miðbær", `620`="Hfj:Holt", `630`="Hfj:Vellir", `640`="Hfj:Ásland", `650`="Hfj:Setberg", `660`="Hfj:Flensborg", `670`="Hfj:Vellir", `680`="Hfj:Holt", `800`="Mos:Miðbær", `810`="Mos:Teigar", `820`="Mos:Leirvogstunga", `830`="Mos:Dalur", `840`="Mos:Hlíðar", `850`="Mos:Helgafell", `890`="Mos:Annað", `999`="Kóp:Annað")
 ```
 
 ## Exploratory Analysis
@@ -99,22 +99,15 @@ In figure 1 we see the property prices based on the municipality on the one hand
 
 ```{r, fig.align = 'center'}
 #(3)yearkeypt
-y1 <- data %>%
-  group_by(yearkeypt) %>%
-  summarise(nuvirdi=mean(nuvirdi)) %>%
-  ggplot() + geom_bar(aes(y=nuvirdi,x=yearkeypt, fill=yearkeypt), stat="identity", position = "dodge") +
-  scale_fill_manual(values=ColorsDT$Color) +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "gray"), legend.position = "none") + 
-  geom_hline(yintercept=mean(data$nuvirdi), col = '#7b4912', size=1) + labs(x= "Sales year", y= "Mean Property Price") + coord_flip()
-y2 <- data %>% ggplot(aes(x=nuvirdi,y=yearkeypt, fill=yearkeypt)) +
+data %>% ggplot(aes(x=nuvirdi,y=as.factor(yearkeypt), fill=as.factor(yearkeypt))) +
   geom_density_ridges_gradient() +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), legend.position = "none") + 
   ggtitle(" ") + xlim(c(0,100000)) + scale_fill_manual(values=ColorsDT$Color) + 
-  labs(y = " ", x = "Property Price")
-grid.arrange(y1,y2,nrow=1, top = "Figure 2: Property price by year of sale")
+  labs(y = " ", x = "Property Price") + ggtitle("Figure 2: Property price by year of sale")
 ```
+ATH: tók burt aðra myndina svo þarf að laga textann i samræmi við það!
 
-In figure 2 we can see the mean property price by year of sale. The vertical line represents the mean property price over the years 2012 to 2018 ($\mu \approx$ `r round(mean(data$nuvirdi))`). Property prices have gradually increased over the years.  
+In figure 2 we can see the property price by year of sale. The vertical line represents the mean property price over the years 2012 to 2018 (Overall $\mu \approx$ `r round(mean(data$nuvirdi))`). Property prices have gradually increased over the years.  
 
 ```{r, fig.align = 'center'}
 #(4)fj breytunar
@@ -209,13 +202,13 @@ In figure 5 we see price per square meter by municipality. We can gather that pr
 #Corrplot allar numeric breytur
 da <- data %>%
   dplyr::select(where(is.numeric))
-colnames(da) <- c("Pr.Price","Area","Floors","Parking","Baths","Showers","Toilets","Kitchens","Rooms","Liv.r.","Age", "Storage","Sqm.Price")
-corrplot.mixed(cor(da[-12]), lower.col = "#d88121", number.cex=0.7, tl.pos = "lt", upper.col = "#8c5e4a", order="hclust", tl.col="#341e12", tl.cex=0.7, tl.srt = 45, 
+head(da)
+colnames(da) <- c("Pr.Price","Sqm","Floors","Parking","Baths","Showers","Toilets","Kitchens","Rooms","Liv.r.", "Storage","Salesyear","Age")
+corrplot.mixed(cor(da[-13]), lower.col = "#d88121", number.cex=0.7, tl.pos = "lt", upper.col = "#8c5e4a", tl.col="#341e12", tl.cex=0.7, tl.srt = 45, 
                title = "Figure 6: Correlation plot of property attributes", mar=c(0,0,4,0))
 ```
 
-LAGA - label cutoffs
-ATH, vantar AGE inn í - ef þú skoðar _da_ gagnasettið þá sérðu að Age tekur bara gildi frá 0-8 (en í _data_ gagnasettinu er hæsta gildið 177). Veit ekki alveg hvar þetta gæti hafa gerst í kóðanum.  
+LAGA - label cutoffs 
 
 A correlation plot of 12 property attributes can be seen on figure 6. Property price appears to have a moderately strong positive correlation with area (property size in square meters) and number of rooms, living rooms, floors, showers and toilets in a property. 
 
@@ -230,22 +223,18 @@ In this part we will predict sales prices using the Lasso and boosting methods.
 ÞURFUM AÐ BREYTA AÐEINS TRAIN OG TEST SET ÞANNIG AÐ ÞAÐ SÉ HÆGT AÐ NOTA FYRIR ALLAR AÐFERÐIR. ÞAÐ ER SNIÐIÐ AÐ LASSO AÐFERÐINNI EINS OG ER, GET EKKI NOTAÐ SAMA TRAIN OG TEST SET Í T.D. BOOSTING. Breytan x (fyrir model.matrix skipunina er einnig óvenju stór. Þurfum að endurhugsa aðeins hvernig við viljum kóða fyrir lasso aðferðina)
 
 Bjuggum til ný test og training set (sjá undir Boosting kaflanum). Ef við höldum okkur við það þá ættum við að geta notað sama test og training set fyrir allar aðferðir. 
-
 ```{r}
 set.seed(4)
 x <- model.matrix(nuvirdi~., data)[,-1]
-y <- data$nuvirdi
-grid <- 10^seq(2,-4, by= -.10)
+y <- log(data$nuvirdi)
+grid <- 10^seq(2,-2, by= -.1)
 train <- sample(1:nrow(x),nrow(x)*0.7)
-x.test <- (-train)
-y.test <- y[x.test]
 
 lasso.cv <- cv.glmnet(x[train,],
                       y[train],
                       alpha=1,
-                      lambda = grid,
                       standardize=T,
-                      nfolds=10)
+                      lambda = grid)
 
 bestlam <- lasso.cv$lambda.min 
 
@@ -256,7 +245,6 @@ data.frame(lambda = lasso.cv$lambda,
   geom_point() + 
   geom_line() +
   scale_x_continuous(trans = 'log10') + 
-  scale_y_continuous(trans = 'log10', labels = scales::comma_format()) + 
   theme(legend.position = "bottom") + 
   scale_color_identity() +
   labs(x = "Lambda", 
@@ -269,15 +257,15 @@ data.frame(lambda = lasso.cv$lambda,
 bestlam
 ```
 HUGMYND, bæta bestlam á plottið. 
-Our optimal value of λ is 0.0001 for minimum MSE.
+Our optimal value of $\lambda$ is `r bestlam` for minimum MSE.
 
 ```{r}
 library(reshape2)
 lasso.mod <- glmnet(x[train,],
                     y[train],
                     alpha=1,
-                    lambda = bestlam,
-                    standardize = T)
+                    standardize = T,
+                    lambda = bestlam)
 beta <- coef(lasso.mod)
 plot <- as.data.frame(as.matrix(beta))
 plot$coef <- row.names(plot)
@@ -292,9 +280,27 @@ plot[-1,] %>%
   scale_fill_manual(values = sample(ColorsDT$Color)) + 
   scale_color_manual(name = "Type of property",values=sample(ColorsDT$Color)) + labs(x="Coefficient", y=" ") + ggtitle("Figure X: Predictors with non-zero Lasso coefficients")
   
-  mean((plot$value-data$nuvirdi)^2)
+mean((plot$value-data$nuvirdi)^2)
 ```
 
+```{r}
+library(scales)
+x.test <- x[-train,]
+lasso.pred <- predict(lasso.mod, s=bestlam, newx=x.test)
+lassomse <- percent(mean(lasso.pred[1]-y)^2)
+
+gaga <- cbind(lasso.pred,y)
+gaga <- as.data.frame(gaga)
+colnames(gaga) <- c("pred", "true")
+gaga %>%
+  ggplot(aes(y=exp(pred)/1000,x=exp(true)/1000)) + geom_point()+ 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        panel.background = element_blank(), legend.position = "none") +  labs(x="Observed", y="Predicted") + ggtitle("Figure X: Lasso predicted versus observed property prices") + geom_abline(slope=1,intercept = 0,lty=2, col= "#d88121")
+```
+
+LAGA: bæta við "m.kr" á axis values
+
+The Lasso test error obtained was `r lassomse`. 
 
 #### Boosting
 
