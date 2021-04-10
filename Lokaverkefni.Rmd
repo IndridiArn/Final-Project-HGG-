@@ -70,7 +70,7 @@ data$matssvaedi <- recode_factor(data$matssvaedi, `11`="Rvk:Vesturbær", `20` = 
                                  `400`="Seltjarnarnes", `500`="Grb:Miðbær", `510`="Grb:Ásar", `511`="Grb:Arnarnes", `520`="Grb:Sjáland", `530`="Grb:Hraunholt", `540`="Grb:Arnarnes", `550`="Grb:Urriðarholt", `560`="Grb:Flatir", `590`="Grb:Annað",`700`="Grb:Álftanes", `600`="Hfj:Miðbær", `620`="Hfj:Holt", `630`="Hfj:Vellir", `640`="Hfj:Ásland", `650`="Hfj:Setberg", `660`="Hfj:Flensborg", `670`="Hfj:Vellir", `680`="Hfj:Holt", `800`="Mos:Miðbær", `810`="Mos:Teigar", `820`="Mos:Leirvogstunga", `830`="Mos:Dalur", `840`="Mos:Hlíðar", `850`="Mos:Helgafell", `890`="Mos:Annað", `999`="Kóp:Annað")
 ```
 
-## Exploratory Analysis
+## Part I: Exploratory Analysis
 
 In this part we will explore the data. Property price is an important variable in our dataset and we are interested in exploring the relationship it has with the other variables in our data set. 
 
@@ -82,16 +82,20 @@ set.seed(4)
 #(1)svfn
 f1 <- data %>% ggplot(aes(x=nuvirdi,y=svfn, fill=svfn)) +
   geom_density_ridges_gradient() +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), legend.position = "none") + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(),
+        legend.position = "none") + 
   xlim(c(0,100000)) + 
   scale_fill_manual(values=ColorsDT$Color) + 
   labs(y = " ", x = "Property Price")
 #(2)matssvaedi
 f2 <- data %>% ggplot(aes(x=nuvirdi,y=matssvaedi, fill=svfn)) +
   geom_density_ridges_gradient() +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), legend.position = "none") + 
-  ggtitle(" ") + xlim(c(0,100000)) + scale_fill_manual(values=ColorsDT$Color) + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(),
+        legend.position = "none") + 
+  ggtitle(" ") + xlim(c(0,100000)) + 
+  scale_fill_manual(values=ColorsDT$Color) + 
   labs(y = " ", x = "Property Price")
+
 grid.arrange(f1,f2,nrow=1,top="Figure 1: Property price based on municipality and neighbourhood")
 ```
 
@@ -99,15 +103,18 @@ In figure 1 we see the property prices based on the municipality on the one hand
 
 ```{r, fig.align = 'center'}
 #(3)yearkeypt
-data %>% ggplot(aes(x=nuvirdi,y=as.factor(yearkeypt), fill=as.factor(yearkeypt))) +
+data %>% 
+  ggplot(aes(x=nuvirdi,y=as.factor(yearkeypt), fill=as.factor(yearkeypt))) +
   geom_density_ridges_gradient() +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), legend.position = "none") + 
-  ggtitle(" ") + xlim(c(0,100000)) + scale_fill_manual(values=ColorsDT$Color) + 
-  labs(y = " ", x = "Property Price") + ggtitle("Figure 2: Property price by year of sale")
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(),
+        legend.position = "none", plot.title = element_text(hjust = 0.5)) + 
+  ggtitle(" ") + xlim(c(0,100000)) + 
+  scale_fill_manual(values=ColorsDT$Color) + 
+  labs(y = " ", x = "Property Price") + 
+  ggtitle("Figure 2: Property price by year of sale")
 ```
-ATH: tók burt aðra myndina svo þarf að laga textann i samræmi við það!
 
-In figure 2 we can see the property price by year of sale. The vertical line represents the mean property price over the years 2012 to 2018 (Overall $\mu \approx$ `r round(mean(data$nuvirdi))`). Property prices have gradually increased over the years.  
+In figure 2 we can see the property price by year of sale. Property prices have gradually increased over the years. The average property price over the years 2012 to 2018 is approximately 37 million isk ($\mu \approx$ `r round(mean(data$nuvirdi))`).  
 
 ```{r, fig.align = 'center'}
 #(4)fj breytunar
@@ -131,7 +138,7 @@ grid.arrange(ff(data$fjhaed)+
                labs(x = "Kitchens", y = " "), ff(data$fjherb) + 
                labs(x = "Rooms", y = " "), ff(data$fjstof) + 
                labs(x = "Living Rooms", y = " "), ff(data$fjgeym) + 
-               labs(x = "Storage Rooms", y = " "), top="Figure 3: Mean property price by various elements")
+               labs(x = "Storage Rooms", y = " "), top= "Figure 3: Mean property price by various elements")
 ```
 LAGA - uppsetninguna i grid.arrange og labels.. 
 
@@ -144,16 +151,18 @@ data_fjolbylishus <- data %>% filter(ibteg == 0) %>%
   mutate(lyfta = ifelse(lyfta == 1, "Yes", "No")) %>%
   group_by(lyfta,svfn) %>%
   summarise(nuvirdi=mean(nuvirdi))
+
 data_fjolbylishus %>%
   ggplot() + geom_bar(aes(x=nuvirdi,y=svfn, fill=lyfta), stat= "identity", position = "dodge") +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank()) + 
-  ggtitle("Figure 3: Mean prices for apartments by municipality and elevator status") + 
+  ggtitle("Figure X: Mean prices for apartments by municipality and elevator status") + 
   xlim(c(0, 45000)) + 
   scale_fill_manual(name = "Elevator", values=sample(ColorsDT$Color)) + 
   labs(y = " ", x = "Property Price") + coord_flip()
 
 datt <- data_fjolbylishus %>%
   pivot_wider(names_from = svfn, values_from=nuvirdi)
+
 dat <- datt[-1]
 Heild <- apply(dat,2,sum)
 mism <- c(dat[2,])-(dat[1,])
@@ -161,9 +170,7 @@ tt <- paste(round((mism)/Heild,2)*100,"%")
 kable(t(tt), col.names = c("RVK","KÓP","SEL","GRB","HFJ","MOS"), caption = "Table 1: Percentage increase in apartment price by having an elevator") %>% kable_styling(full_width = F)
 ```
 
-LAGA - setti þetta bara upp í töflu því mér datt í hug að gætum gert eitthvað sniðugt við þessar upplýsingar en veit ekki nákvæmlega hvað (setja inn sem label a myndina? eða tala um í texta bara..)
-
-In figure 3 we see the average property price of apartment buildings based on whether the building has an elevator or not. Apartment buildings with elevators are on average more expensive.  
+In figure 3 we see the average property price of apartments based on whether the building has an elevator or not. Apartments in buildings with an elevator are on average more expensive. In table 1 we see the percentage increase in apartments that are in buildings with an elevator. Seltjarnarnes is the only municipality where having an elevator does not increase the propery price. This could peh  
 
 ```{r, fig.align = 'center'}
 # verð út frá aldri byggingar og tegund húsnæðis.
@@ -173,7 +180,8 @@ ggplot(f3, aes(x=nuvirdi,y=age, group = ibteg, color = ibteg)) +
   geom_smooth() + 
   ggtitle("Figure 4: Property price based on age and type of property") +
   labs(x = "Property price", y = "Age of property") + 
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank()) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), 
+        plot.title = element_text(hjust = 0.5)) +
    xlim(c(0,100000)) + 
     scale_color_manual(name = "Type of property",values = sample(ColorsDT$Color))
 ```
@@ -184,6 +192,7 @@ In figure 4 we have the average property price based on age and type of property
 # price per square meter by municipality
 data <- data %>% 
   mutate(fermetraverd = nuvirdi/ibm2)
+
 ggplot(data, aes(x = fermetraverd, y = svfn, fill = svfn)) +
   geom_density_ridges_gradient() +
   labs(x= "Price per square meter", y = "Municipality") +
@@ -202,13 +211,14 @@ In figure 5 we see price per square meter by municipality. We can gather that pr
 #Corrplot allar numeric breytur
 da <- data %>%
   dplyr::select(where(is.numeric))
-head(da)
-colnames(da) <- c("Pr.Price","Sqm","Floors","Parking","Baths","Showers","Toilets","Kitchens","Rooms","Liv.r.", "Storage","Salesyear","Age")
+#head(da)
+colnames(da) <- c("Pr.Price","Sqm","Floors","Parking","Baths","Showers","Toilets","Kitchens","Rooms","Liv.r.", "Storage","Salesyear", "Age")
+
 corrplot.mixed(cor(da[-13]), lower.col = "#d88121", number.cex=0.7, tl.pos = "lt", upper.col = "#8c5e4a", tl.col="#341e12", tl.cex=0.7, tl.srt = 45, 
                title = "Figure 6: Correlation plot of property attributes", mar=c(0,0,4,0))
 ```
 
-LAGA - label cutoffs 
+LAGA - label cutoffs. Virðist enn vanta Age inn í. Spurning hvort það sé eitthvað hámark á hversu margar breytur geta verið í corrplottinu.
 
 A correlation plot of 12 property attributes can be seen on figure 6. Property price appears to have a moderately strong positive correlation with area (property size in square meters) and number of rooms, living rooms, floors, showers and toilets in a property. 
 
@@ -220,9 +230,6 @@ In this part we will predict sales prices using the Lasso and boosting methods.
 
 #### The lasso
 
-ÞURFUM AÐ BREYTA AÐEINS TRAIN OG TEST SET ÞANNIG AÐ ÞAÐ SÉ HÆGT AÐ NOTA FYRIR ALLAR AÐFERÐIR. ÞAÐ ER SNIÐIÐ AÐ LASSO AÐFERÐINNI EINS OG ER, GET EKKI NOTAÐ SAMA TRAIN OG TEST SET Í T.D. BOOSTING. Breytan x (fyrir model.matrix skipunina er einnig óvenju stór. Þurfum að endurhugsa aðeins hvernig við viljum kóða fyrir lasso aðferðina)
-
-Bjuggum til ný test og training set (sjá undir Boosting kaflanum). Ef við höldum okkur við það þá ættum við að geta notað sama test og training set fyrir allar aðferðir. 
 ```{r}
 set.seed(4)
 x <- model.matrix(nuvirdi~., data)[,-1]
@@ -250,14 +257,13 @@ data.frame(lambda = lasso.cv$lambda,
   labs(x = "Lambda", 
        y = "Cross-Validation MSE", 
        col = "Non-Zero Coefficients:", 
-       title = "Figure 7: 10-Fold CV Lasso lambda selection")+ 
+       title = "Figure X: 10-Fold CV Lasso lambda selection")+ 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        panel.background = element_blank(), legend.position = "none")
-
-bestlam
+        panel.background = element_blank(), legend.position = "none", 
+        plot.title = element_text(hjust = 0.5))
 ```
-HUGMYND, bæta bestlam á plottið. 
-Our optimal value of $\lambda$ is `r bestlam` for minimum MSE.
+
+Our optimal $\lambda$ is `r bestlam` for the minimum MSE. The test MSE is ?
 
 ```{r}
 library(reshape2)
@@ -266,6 +272,7 @@ lasso.mod <- glmnet(x[train,],
                     alpha=1,
                     standardize = T,
                     lambda = bestlam)
+
 beta <- coef(lasso.mod)
 plot <- as.data.frame(as.matrix(beta))
 plot$coef <- row.names(plot)
@@ -274,28 +281,38 @@ plot$variable <- as.numeric(gsub("s","",plot$variable))
 plot$lambda <- lasso.mod$lambda[plot$variable+1]
 plot[-1,] %>%
   filter(value>0) %>%
-  ggplot(aes(value,reorder(coef,value), col=coef)) + geom_point(show.legend = F)+ 
+  ggplot(aes(value,reorder(coef,value), col=coef)) + 
+  geom_point(show.legend = F) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        panel.background = element_blank(), legend.position = "none") + 
+        panel.background = element_blank(), 
+        legend.position = "none") + 
   scale_fill_manual(values = sample(ColorsDT$Color)) + 
-  scale_color_manual(name = "Type of property",values=sample(ColorsDT$Color)) + labs(x="Coefficient", y=" ") + ggtitle("Figure X: Predictors with non-zero Lasso coefficients")
+  scale_color_manual(name = "Type of property",values=sample(ColorsDT$Color)) + 
+  labs(x= "Coefficients", y=" ") + 
+  ggtitle("Figure X: Predictors with non-zero Lasso coefficients")
   
 mean((plot$value-data$nuvirdi)^2)
 ```
+
+Túlka mynd og gildið undir mynd. Breyta breytunöfnum á y-ás. 
 
 ```{r}
 library(scales)
 x.test <- x[-train,]
 lasso.pred <- predict(lasso.mod, s=bestlam, newx=x.test)
 lassomse <- percent(mean(lasso.pred[1]-y)^2)
-
 gaga <- cbind(lasso.pred,y)
 gaga <- as.data.frame(gaga)
 colnames(gaga) <- c("pred", "true")
 gaga %>%
-  ggplot(aes(y=exp(pred)/1000,x=exp(true)/1000)) + geom_point()+ 
+  ggplot(aes(y=exp(pred)/1000,x=exp(true)/1000)) + 
+  geom_point()+ 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        panel.background = element_blank(), legend.position = "none") +  labs(x="Observed", y="Predicted") + ggtitle("Figure X: Lasso predicted versus observed property prices") + geom_abline(slope=1,intercept = 0,lty=2, col= "#d88121")
+        panel.background = element_blank(), legend.position = "none", 
+        plot.title = element_text(hjust = 0.5)) +  
+  labs(x="Observed", y="Predicted") + 
+  ggtitle("Figure X: Lasso predicted versus observed property prices") + 
+  geom_abline(slope=1,intercept = 0,lty=2, col= "#d88121")
 ```
 
 LAGA: bæta við "m.kr" á axis values
@@ -304,16 +321,20 @@ The Lasso test error obtained was `r lassomse`.
 
 #### Boosting
 
+Fitting a boosted model to our training data. Tuning the lambda parameter to the lowest test MSE.
 ```{r, warning = F, message = F, echo = F}
 # train og x.test
 set.seed(1)
- 
-TRAIN <- sample(1:nrow(data), nrow(data)*0.7)
-train.set <- data[TRAIN,]
-test.set <- data[-TRAIN,]
 
+data.Log.nuvirdi <- data
+data.Log.nuvirdi$nuvirdi <- log(data.Log.nuvirdi$nuvirdi) # nota logarithmann af 
 
-lambdaGrid <- seq(-3, -2, length.out = 20) # Typical values are 0.01 or 0.001
+TRAIN <- sample(1:nrow(data.Log.nuvirdi), nrow(data.Log.nuvirdi)*0.7)
+train.set <- data.Log.nuvirdi[TRAIN,]
+test.set <- data.Log.nuvirdi[-TRAIN,]
+
+# Tuning lambda
+lambdaGrid <- seq(-3, -0.9, length.out = 20) # Typical values are 0.01 or 0.001
 lambdas <- 10^lambdaGrid
 
 test.MSE <- rep(NA, length(lambdas)) #define list to store training errors
@@ -321,7 +342,6 @@ test.MSE <- rep(NA, length(lambdas)) #define list to store training errors
 for (i in 1:length(lambdas)) {
   GBM.boost <- gbm(nuvirdi ~ ., data = train.set,
                      distribution = "gaussian", 
-                     n.trees = 1000, 
                      shrinkage = lambdas[i])
  
    boost.predict <- predict(GBM.boost, test.set, 
@@ -333,7 +353,44 @@ plot(lambdas, test.MSE,
      type = "b", 
      xlab = "Shrinkage value (lambda)", 
      ylab = "Test MSE", 
-     main = "Test MSE for a range of lambda values", 
-     col = "darkblue")
+     main = "Figure X: Test MSE for a range of lambda values", 
+     col = "#d88121")
+
+min.testMSE <- min(test.MSE) # gives the lowest test MSE
+min.lambda <- round(lambdas[which.min(test.MSE)], 2) # gives the lambda corresponding to lowest test
 ```
-ATH, keyrslutími á knitr er mjög hægur við að keyra boosting. Ef við vitum að kóðinn virkar getum við tekið þessa skipun út í bili svo knitting taki ekki of langan tíma. 
+
+Our optimal $\lambda$ is `r min.lambda` for the minimum test MSE. The minimum test MSE is `r min.testMSE`. 
+
+Finna út prediction og reikna út prediction accuracy
+```{r}
+boost <- gbm(nuvirdi ~ ., data = train.set, #fjarlægja fermetraverð breytuna því hún er búin til úr núvirði og ibm2
+             distribution = "gaussian", 
+             shrinkage = 0.1, # common lambda to use (0.01 or 0.001)
+             n.trees = 1000)
+library(vip)
+vip(boost, aesthetics = list(color = "#d88121", fill = "#a36e56"), mapping = aes_string(fill = "Variable")) + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(),
+        plot.title = element_text(hjust = 0.5)) + 
+  ggtitle("Figure X: Relative influence of variables using boosting") + 
+  labs(x = "Property Price", y = "Relative influence") 
+
+#  scale_y_discrete(labels=c("fjhaed"="Hæðir")) Virkar ekki. 
+
+
+#summary(boost, cBars = 10, 
+#        method = relative.influence, 
+#        las = 2) #breyta þessu í ggplot. 
+
+
+#Reikna út hversu % af predictive power - er það venjulega gert í boosting? 
+
+```
+
+LAGA: liti og y-axis á plottinu. 
+
+There are three variables that have high relative importance, they are square meters of property, the year the property was bought and number of bathrooms. Square meters per property is by far the most important variable. In figure X and X in part I we learned that the more square meters and bathrooms are in a property the more expensive it is. We also learned that property prices increase the younger the property is.
+
+Fjalla hér aðeins um muninn á test MSE hjá Lasso og Boosting. Bera saman hvaða breytur voru taldar mikilvægastar þegar kemur að því að spá núvirði. 
+
+
