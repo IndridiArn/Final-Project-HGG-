@@ -1,4 +1,3 @@
----
 title: "Lokaverkefni nafn hér"
 author: "Bergrós Skúladóttir, Indriði Arnaldsson & Íris Aníta Eyþórsdóttir"
 output:
@@ -94,7 +93,6 @@ f2 <- data %>% ggplot(aes(x=nuvirdi/1e3,y=matssvaedi, fill=svfn)) +
   ggtitle(" ") +   scale_x_continuous(labels = label_number(suffix = " m.ISK"), limits=c(0,100), breaks=seq(0,100,by=50)) +
   scale_fill_manual(values=ColorsDT$Color) + 
   labs(y = " ", x = "Property Price")
-
 grid.arrange(f1,f2,nrow=1,top="Figure 1: Property price based on municipality and neighbourhood")
 ```
 
@@ -159,7 +157,6 @@ Heild <- apply(dat,2,sum)
 mism <- c(dat[2,])-(dat[1,])
 tt <- paste(round((mism)/Heild,2)*100,"%")
 tt <- t(tt)
-
 data_fjolbylishus %>%
   ggplot() + geom_bar(aes(y=nuvirdi/1e3,x=svfn, fill=lyfta), stat= "identity", position = "dodge") +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank()) + 
@@ -167,7 +164,6 @@ data_fjolbylishus %>%
   scale_y_continuous(labels = label_number(suffix = " m.ISK"), limits=c(0,45), breaks=seq(0,45,by=10)) + 
   scale_fill_manual(name = "Elevator", values=sample(ColorsDT$Color)) + 
   labs(x = " ", y = "Apartment Price") + annotate(geom="text", y=20,x="Reykjavik", label= paste("+",tt[1]), col="white")+ annotate(geom="text", y=20,x="Kopavogur", label= paste("+",tt[2]), col="white")+ annotate(geom="text", y=20,x="Seltjarnarnes", label= paste("+",tt[3]), col="white")+ annotate(geom="text", y=20,x="Gardabaer", label= paste("+",tt[4]), col="white")+ annotate(geom="text", y=20,x="Hafnarfjordur", label= paste("+",tt[5]), col="white")+ annotate(geom="text", y=20,x="Mosfellsbaer", label= paste("+",tt[6]), col="white")
-
 ```
 
 In figure 3 we see the average property price of apartments based on whether the building has an elevator or not. Apartments in buildings with an elevator are on average more expensive. We see the percentage increase in apartments that are in buildings with an elevator. Seltjarnarnes is the only municipality where having an elevator does not increase the propery price. This could peh  
@@ -192,7 +188,6 @@ In figure 4 we have the average property price based on age and type of property
 # price per square meter by municipality
 data <- data %>% 
   mutate(fermetraverd = nuvirdi/ibm2)
-
 ggplot(data, aes(x = fermetraverd, y = svfn, fill = svfn)) +
   geom_density_ridges_gradient() +
   labs(x= "Price per square meter", y = "Municipality") +
@@ -230,18 +225,15 @@ In this part we will predict sales prices using the Lasso and boosting methods.
 ```{r}
 set.seed(4)
 blabb <- subset(data[-13])
-
 x <- model.matrix(nuvirdi~., blabb)[,-1]
 grid <- 10^seq(2,-4, by=-0.1)
 train <- sample(1:nrow(x),nrow(x)*0.7)
 Tr <- blabb[train,]
 y <- Tr$nuvirdi
-
 lasso.cv <- cv.glmnet(x[train,],
                       y,
                       alpha=1,
                       lambda = grid)
-
 bestlam <- lasso.cv$lambda.min
 bestlam1se <- lasso.cv$lambda.1se
 data.frame(lambda = lasso.cv$lambda, 
@@ -281,7 +273,6 @@ haha <- plot[-1,] %>%
   filter(value>0) %>%
   arrange(-value)
 rownames(haha) <- c("Seltjarnarnes", "Garðabær", "Parking", "Toilets", "Prop. Type", "Sales Year", "Showers", "Living rooms", "Elevator", "Rooms", "Storage", "Bathtubs", "Kópavogur", "Price per Sqm", "Sqm")
-
 haha %>%
   ggplot(aes(value,reorder(rownames(haha),value), col=coef)) + geom_point(show.legend = F)+ 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
@@ -301,7 +292,7 @@ r2train.lasso <- percent(lasso.mod$dev.ratio)
 
 The Lasso approach found `r nrow(haha)` important coefficients. The model explained around `r r2train.lasso` of variance ($R^2$) in property price for the training data and around `r r2.lasso` for the test data. With $\lambda$ set to log(10). With training error around `r lasso.trainmse` m.ISK and test error around `r lassomse.` m.ISK. 
 
-  The main issue with this approach is blindness regarding correlated/confounding variables.  
+The main issue with this approach is blindness regarding correlated/confounding variables.  
   
 ```{r}
 gaga <- cbind(lasso.pred,y)
@@ -315,78 +306,150 @@ scale_x_continuous(labels = label_number(suffix = " m.ISK"), limits=c(0,150)) +
   scale_y_continuous(labels = label_number(suffix = " m.ISK"), limits=c(0,150))
 ```
 
+
 #### Boosting
 
 Fitting a boosted model to our training data. Tuning the lambda parameter to the lowest test MSE.
+
 ```{r, warning = F, message = F, echo = F}
 # train og x.test
 set.seed(1)
-
-data.Log.nuvirdi <- data
-data.Log.nuvirdi$nuvirdi <- log(data.Log.nuvirdi$nuvirdi) # nota logarithmann af 
-
-TRAIN <- sample(1:nrow(data.Log.nuvirdi), nrow(data.Log.nuvirdi)*0.7)
-train.set <- data.Log.nuvirdi[TRAIN,]
-test.set <- data.Log.nuvirdi[-TRAIN,]
-
+#data.Log.nuvirdi <- data
+#data.Log.nuvirdi$nuvirdi <- log(data.Log.nuvirdi$nuvirdi) # nota logarithmann af 
+TRAIN <- sample(1:nrow(data), nrow(data)*0.7)
+train.set <- data[TRAIN,]
+test.set <- data[-TRAIN,]
 # Tuning lambda
-lambdaGrid <- seq(-3, -0.9, length.out = 20) # Typical values are 0.01 or 0.001
+lambdaGrid <- seq(-3, -0.1, length.out = 20) # Typical values are 0.01 or 0.001
 lambdas <- 10^lambdaGrid
-
 test.MSE <- rep(NA, length(lambdas)) #define list to store training errors
-
 for (i in 1:length(lambdas)) {
   GBM.boost <- gbm(nuvirdi ~ ., data = train.set,
                      distribution = "gaussian", 
                      shrinkage = lambdas[i])
  
    boost.predict <- predict(GBM.boost, test.set, 
-                                    n.trees = 1000)
+                                    n.trees = 100) #breyta þessu í 1000 síðar. Ekki hægt að overfitta í boosting? 
    test.MSE[i] <- round(mean((boost.predict - test.set$nuvirdi)^2), 2)
 }
-
-plot(lambdas, test.MSE, 
+plot(lambdas, log10(test.MSE), # sama og er í lasso? 
      type = "b", 
      xlab = "Shrinkage value (lambda)", 
      ylab = "Test MSE", 
      main = "Figure X: Test MSE for a range of lambda values", 
      col = "#d88121")
-
 min.testMSE <- min(test.MSE) # gives the lowest test MSE
 min.lambda <- round(lambdas[which.min(test.MSE)], 2) # gives the lambda corresponding to lowest test
 ```
 
-Our optimal $\lambda$ is `r min.lambda` for the minimum test MSE. The minimum test MSE is `r min.testMSE`. 
+Here we compute the test error as a function of the shrinkage value. Our optimal $\lambda$ is `r min.lambda` for the minimum test MSE. The minimum test MSE is `r min.testMSE`. 
 
 Finna út prediction og reikna út prediction accuracy
 ```{r}
-boost <- gbm(nuvirdi ~ ., data = train.set, #fjarlægja fermetraverð breytuna því hún er búin til úr núvirði og ibm2
+boost <- gbm(nuvirdi ~ ., data = train.set[-18], #fjarlægja fermetraverð breytuna því hún er búin til úr núvirði og ibm2
              distribution = "gaussian", 
              shrinkage = 0.1, # common lambda to use (0.01 or 0.001)
-             n.trees = 1000)
+             n.trees = 100)
 library(vip)
-vip(boost, aesthetics = list(color = "#d88121", fill = "#a36e56"), mapping = aes_string(fill = "Variable")) + 
+vip(boost, aesthetics = list(fill = c("#d48149","#da9566","#ca6e2f","#ad5e28","#e1a983","#e8bda0","#2e1f18",
+                                      "#462f25","#5d3f31","#904e22")), 
+    mapping = aes_string(fill = "Variable")) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(),
         plot.title = element_text(hjust = 0.5)) + 
   ggtitle("Figure X: Relative influence of variables using boosting") + 
   labs(x = "Property Price", y = "Relative influence") 
-
 #  scale_y_discrete(labels=c("fjhaed"="Hæðir")) Virkar ekki. 
-
-
-#summary(boost, cBars = 10, 
-#        method = relative.influence, 
-#        las = 2) #breyta þessu í ggplot. 
-
-
-#Reikna út hversu % af predictive power - er það venjulega gert í boosting? 
-
+ 
+# Reikna út RMSE 
+library(Metrics)
+predictions <- boost %>% predict(test.set)
+rmse.boost <- rmse(predictions, test.set$nuvirdi)
 ```
 
-LAGA: liti og y-axis á plottinu. 
+LAGA: y-axis á plottinu. 
 
 There are three variables that have high relative importance, they are square meters of property, the year the property was bought and number of bathrooms. Square meters per property is by far the most important variable. In figure X and X in part I we learned that the more square meters and bathrooms are in a property the more expensive it is. We also learned that property prices increase the younger the property is.
 
-Fjalla hér aðeins um muninn á test MSE hjá Lasso og Boosting. Bera saman hvaða breytur voru taldar mikilvægastar þegar kemur að því að spá núvirði. 
+Fjalla hér aðeins um muninn á test MSE hjá Lasso og Boosting. Bera saman hvaða breytur voru taldar mikilvægastar þegar kemur að því að spá fyrir um núvirði.
+
+Getum sett hér inn töflu fyrir RMSE og test MSE fyrir bæði Lasso og Boosting. 
+Boosting: the test MSE is `r min.testMSE`and the RMSE is is `r rmse.boost`  
+
+Í Boosting eru í raun þrír tuning parameters: 1) lambda, 2) fjöldi trees (n.trees) og 3) mtry: variables considered at each split. Ég reiknaði út test errorið as a function of lambda en það væri líka hægt að gera út frá trees (getum kannski skoðað það ef tími gefst). Við gerum þetta allavega bara út frá lambda í verkefnunum. Annað: Random forest er bara með einn tuning parameter (mtry) og er töluvert einfaldara, væri hægt að framkvæma það líka í staðinn. 
 
 
+## Part II
+
+Here we will predict the values of X using X and X methods. 
+
+```{r}
+# Búum til nýtt gagnasafn. Breytum breytunni AGE í factor breytu. Tekur gildið 1 = ný bygging, 0 = gömul bygging. Út frá miðgildi AGE. 
+set.seed(1)
+data2 <- data %>% mutate(AgeNew = (ifelse(age < 32, 1, 0))) %>% 
+  select(-age, -matssvaedi, -fermetraverd) %>%
+  mutate_at("AgeNew", factor) %>%
+  na.omit()  # sjá colSums(is.na(data)) 
+
+#Skiptum aftur í training og test set. 
+train2 <- sample(1:nrow(data2), nrow(data2)*0.7)
+train.set2 <- data2[train2,]
+test.set2 <- data2[-train2,]
+```
+
+#### Quadratic discriminant analysis
+
+```{r}
+library(MASS)
+QDA.fit <- qda(AgeNew ~ ., data = train.set2)
+
+QDA.pred <- predict(QDA.fit, test.set2)
+
+#QDA.fit # hvaða upplýsingar fáum við úr þessu outputti? 
+
+# Lets look at the confusion matrix for LDA to see how well the LDA fit works with the test.set
+
+kabletable <- table(QDA.pred$class,test.set2$AgeNew)
+kbl(kabletable) %>% 
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = F, position = "center", stripe_color = "#562f14") %>%
+  add_header_above(c(" " = 1, "True values" = 2))
+
+#b1816c","#a36e56","#8c5e4a","#744e3d","#5d3f31","#462f25","#2e1f18", "#e8bda0","#e1a983","#da9566","#d48149","#ca6e2f","#ad5e28","#904e22","#733f1b","#562f14", "#391f0d","#d9bfae","#ceab96","#c3987d","#b88465","#aa714e
+
+meanQDA <- round(1-(mean(QDA.pred$class == test.set2$AgeNew)), 2)
+meanQDAperc <- percent(meanQDA)
+```
+
+LAGA þessa ógeðslegu TÖFLU: Vantar (1) Row header, (2) Litaþemað, (3) Endurskýra 0 = Old, 1 = New. (4) Gera True values að subtitle header og bæta við main header sem heitir t.d. "Table X. True and predicted values for age of buildings".
+
+The test error rate of the LDA model is  `r meanQDA`, meaning the model predicted incorrectly nearly  `r meanQDAperc` of the time. 
+Umfjöllun hér um false positive og false negative rate (sjá glósur).
+
+#### Logistic regression 
+```{r}
+LOG.fit <- glm(AgeNew ~ ., data = train.set2,
+               family = "binomial")
+#summary(LOG.fit) #segir okkur hvaða coefficients eru marktækir
+
+LOG.prob <- predict(LOG.fit, newdata = test.set2, 
+                    type = "response")
+
+LOG.pred <- rep(0, nrow(test.set2))
+
+LOG.pred[LOG.prob > 0.5] <- 1 #define values as 1 (new property) if probs are above 0.5. 
+
+kabletable2 <- table(LOG.pred, test.set2$AgeNew)
+
+kbl(kabletable2) %>% 
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = F, position = "center", stripe_color = "#562f14") %>%
+  add_header_above(c(" " = 1, "True values" = 2))
+
+meanLOG <- round(1-(mean(LOG.pred == test.set2$AgeNew)), 2)
+meanLOGperc <- percent(meanLOG)
+```
+LAGA TÖFLU HÉR LÍKA. 
+
+Bæta við umfjöllun um hvaða breytur eru marktækar?
+
+The test error rate of the LDA model is  `r meanLOG`, meaning the model predicted incorrectly nearly  `r meanLOGperc` of the time. Similar result to that of QDA.   
+
+#### Random forests
