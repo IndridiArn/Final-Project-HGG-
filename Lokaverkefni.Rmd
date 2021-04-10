@@ -1,3 +1,4 @@
+---
 title: "Lokaverkefni nafn hér"
 author: "Bergrós Skúladóttir, Indriði Arnaldsson & Íris Aníta Eyþórsdóttir"
 output:
@@ -35,6 +36,7 @@ options(scipen = 999)
 library(randomForest)
 library(gbm)
 library(scales)
+library(tree)
 ```
 
 ## Introduction 
@@ -452,4 +454,83 @@ Bæta við umfjöllun um hvaða breytur eru marktækar?
 
 The test error rate of the LDA model is  `r meanLOG`, meaning the model predicted incorrectly nearly  `r meanLOGperc` of the time. Similar result to that of QDA.   
 
-#### Random forests
+#### Classification trees and Random forests
+
+
+TODO túlka og mögulega finna betri plot pakka.
+
+
+```{r}
+
+
+tree.data2 <- tree(AgeNew~.,data=train.set2)
+
+plot(tree.data2)
+text(tree.data2,pretty=0)
+
+tree.pred <- predict(tree.data2,newdata=test.set2, type="class")
+
+#TEST MSE 
+#tree.test.MSE <- mean((tree.pred-test.set2$AgeNew)**2)
+
+pred.table <- table(tree.pred,test.set2$AgeNew)
+
+tree.testMSE <- round(1-mean(tree.pred == test.set2$AgeNew),2)
+
+testMSEperc <- percent(tree.testMSE)
+```
+
+`r testMSEperc` 
+
+TODO: Bæta við texta hér. 
+
+```{r}
+
+tree.data2.cv <- cv.tree(tree.data2)
+
+plot(tree.data2.cv$size,tree.data2.cv$dev,type="b")
+
+prune.tree.data2 <- prune.tree(tree.data2,best=7) 
+
+plot(prune.tree.data2)
+text(prune.tree.data2,pretty=0)
+
+pruned.tree.pred <- predict(prune.tree.data2,newdata=test.set2, type="class")
+
+#pruned.tree.test.MSE <- mean((pruned.tree.pred-test.set2$AgeNew)**2)
+
+pruned.tree.testMSE <- round(1-mean(pruned.tree.pred == test.set2$AgeNew),2)
+
+testMSEperc <- percent(pruned.tree.testMSE)
+```
+
+`r testMSEperc`
+TODO útskýra frekar. 
+We get the same test MSE from the pruned tree. 
+TODO: Spurning hvort við viljum vera með öll þessi plot?
+
+
+
+
+Using random Forest 
+```{r}
+randforr_cs <- randomForest(AgeNew~.,data=train.set2,mtry=9,importance=T,ntree=100) #TODO skoða að breyta Ntree og mögulega mtry, því fleiri sem ntree eru því lengri tíma tekur að keyra. 
+pred_randforr <- predict(randforr_cs,newdata = test.set2)
+randforr_MSE <- round(1-mean((pred_randforr==test.set2$AgeNew)),2)
+
+plot(randforr_cs) # TODO breyta þessu plotti, ég hélt að þetta myndi ekki virka en viti menn.
+#text(randforr_cs,pretty=0)
+  
+  
+varImpPlot(randforr_cs)
+
+randforr_MSE.perc <- percent(randforr_MSE)
+```
+`r randforr_MSE.perc`
+
+
+TODO : muna að breyta randomForest í forlykkjur þar sem mtry = (1:ncol(train.set2)) og hafa ntree ekki of mikið. 
+
+Using the Random forest yields a much better test MSE than the regression tree method. 
+TODO útskýra betur og bera saman við niðurstöðurnar frá QDA og LDA.
+
