@@ -361,7 +361,7 @@ data.frame(mse=test.MSE,
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         panel.background = element_blank(), legend.position = "none", plot.title = element_text(hjust = 0.5)) + 
   ggtitle("Figure 10: Test MSE for a range of lambda values") + 
-  annotate(geom="text",y=10^25, x=10^-0.3, label= expression(paste(lambda, "= 0.7")))
+  annotate(geom="text",y=10^25, x=10^-0.1, label= expression(paste(lambda, "= 0.7")))
 ```
 
 Here we compute the test error as a function of the shrinkage value. Our optimal $\lambda$ is `r min.lambda` for the minimum test MSE. The minimum test MSE is `r min.testMSE`. 
