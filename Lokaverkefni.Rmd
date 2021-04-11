@@ -370,7 +370,7 @@ SLEPPA því að nefna minimum test MSE?
 ```{r, fig.align = 'center'}
 boost <- gbm(nuvirdi ~ ., data = train.set,
              distribution = "gaussian", 
-             shrinkage = 0.1, # common lambda to use (0.01 or 0.001). BREYTA í BEST LAMBDA
+             shrinkage = 0.7, # common lambda to use (0.01 or 0.001). BREYTA í BEST LAMBDA
              n.trees = 100)
 library(vip)
 vip(boost, aesthetics = list(fill = c("#d48149","#da9566","#ca6e2f","#ad5e28","#e1a983","#e8bda0","#2e1f18",
@@ -390,7 +390,7 @@ rmse.boost <- rmse(predictions, test.set$nuvirdi)
 
 LAGA: y-axis á plottinu. 
 
-There are three variables that have high relative importance, they are square meters of property, the year the property was bought and number of bathrooms. Square meters per property is by far the most important variable. In figure X and X in part I we learned that the more square meters and bathrooms are in a property the more expensive it is. We also learned that property prices increase the younger the property is.
+LAGA TÚLKUN. There are four variables that have high relative importance, they are square meters of property, price per square meter, the number of bathrooms and year the property was bought. Square meters per property is by far the most important variable. In figure X and X in part I we learned that the more square meters and bathrooms are in a property the more expensive it is. We also learned that property prices increase the younger the property is.
 
 Fjalla hér aðeins um muninn á test MSE hjá Lasso og Boosting. Bera saman hvaða breytur voru taldar mikilvægastar þegar kemur að því að spá fyrir um núvirði.
 ```{r}
@@ -439,10 +439,11 @@ QDA.pred <- predict(QDA.fit, test.set2)
 #QDA.fit # hvaða upplýsingar fáum við úr þessu outputti? 
 # Lets look at the confusion matrix for LDA to see how well the LDA fit works with the test.set
 kabletable <- table(QDA.pred$class,test.set2$AgeNew)
+rownames(kabletable) <- c("Old", "New")
+colnames(kabletable) <- c("Old", "New")
 kbl(kabletable) %>% 
-  kable_styling(bootstrap_options = c("striped", "hover"), full_width = F, position = "center", stripe_color = "#562f14") %>%
+  kable_styling(full_width = F, position = "center") %>%
   add_header_above(c(" " = 1, "True values" = 2))
-#b1816c","#a36e56","#8c5e4a","#744e3d","#5d3f31","#462f25","#2e1f18", "#e8bda0","#e1a983","#da9566","#d48149","#ca6e2f","#ad5e28","#904e22","#733f1b","#562f14", "#391f0d","#d9bfae","#ceab96","#c3987d","#b88465","#aa714e
 meanQDA <- round(1-(mean(QDA.pred$class == test.set2$AgeNew)), 2)
 meanQDAperc <- percent(meanQDA)
 ```
@@ -462,8 +463,10 @@ LOG.prob <- predict(LOG.fit, newdata = test.set2,
 LOG.pred <- rep(0, nrow(test.set2))
 LOG.pred[LOG.prob > 0.5] <- 1 #define values as 1 (new property) if probs are above 0.5. 
 kabletable2 <- table(LOG.pred, test.set2$AgeNew)
+rownames(kabletable2) <- c("Old", "New")
+colnames(kabletable2) <- c("Old", "New")
 kbl(kabletable2) %>% 
-  kable_styling(bootstrap_options = c("striped", "hover"), full_width = F, position = "center", stripe_color = "#562f14") %>%
+  kable_styling(full_width = F, position = "center") %>%
   add_header_above(c(" " = 1, "True values" = 2))
 meanLOG <- round(1-(mean(LOG.pred == test.set2$AgeNew)), 2)
 meanLOGperc <- percent(meanLOG)
