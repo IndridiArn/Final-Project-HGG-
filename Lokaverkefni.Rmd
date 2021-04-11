@@ -225,7 +225,7 @@ In this part we will predict sales prices using the Lasso and boosting methods.
 
 #### The lasso
 
-```{r}
+```{r, fig.align = 'center'}
 set.seed(4)
 blabb <- data %>% select(-matssvaedi)
 
@@ -260,7 +260,7 @@ data.frame(lambda = lasso.cv$lambda,
 
 Our optimal value of $\lambda$ is log10(`r round(bestlam,2)`), for minimum MSE. 
 
-```{r}
+```{r, fig.align = 'center'}
 library(reshape2)
 lasso.mod <- glmnet(x[train,],
                     y,
@@ -299,7 +299,7 @@ The Lasso approach found `r nrow(haha)` important coefficients. The model explai
 
 The main issue with this approach is blindness regarding correlated/confounding variables.  
   
-```{r}
+```{r, fig.align = 'center'}
 gaga <- cbind(lasso.pred,y)
 gaga <- as.data.frame(gaga)
 colnames(gaga) <- c("pred", "true")
@@ -325,7 +325,7 @@ In Figure 9 we see visually the relationship between the Lasso´s predicted valu
 
 #### Boosting
 
-```{r, warning = F, message = F, echo = F}
+```{r, warning = F, message = F, echo = F, fig.align = 'center'}
 # train og x.test
 set.seed(1)
 #data.Log.nuvirdi <- data
@@ -362,14 +362,14 @@ data.frame(mse=test.MSE,
                labels = trans_format("log10", math_format(10^.x))) +
   scale_color_identity() + xlab( expression(paste("Shrinkage value(", lambda, ")"))) + ylab("Cross-Validation MSE") +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        panel.background = element_blank(), legend.position = "none") + ggtitle("Figure X: Test MSE for a range of lambda values") + annotate(geom="text",y=10^7.8, x=10^0, label= expression(paste(lambda, "= 0.79")))
+        panel.background = element_blank(), legend.position = "none") + ggtitle("Figure 10: Test MSE for a range of lambda values") + annotate(geom="text",y=10^7.8, x=10^0, label= expression(paste(lambda, "= 0.79")))
 ```
 ATH: log10(0.79) = -0.1 -- LAGA láta línuna fara í síðasta punktinn
 
 Here we compute the test error as a function of the shrinkage value. Our optimal $\lambda$ is `r min.lambda` for the minimum test MSE. The minimum test MSE is `r min.testMSE`. 
 
 Finna út prediction og reikna út prediction accuracy
-```{r}
+```{r, fig.align = 'center'}
 boost <- gbm(nuvirdi ~ ., data = train.set[-18], #fjarlægja fermetraverð breytuna því hún er búin til úr núvirði og ibm2
              distribution = "gaussian", 
              shrinkage = 0.1, # common lambda to use (0.01 or 0.001)
@@ -380,7 +380,7 @@ vip(boost, aesthetics = list(fill = c("#d48149","#da9566","#ca6e2f","#ad5e28","#
     mapping = aes_string(fill = "Variable")) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(),
         plot.title = element_text(hjust = 0.5)) + 
-  ggtitle("Figure X: Relative influence of variables using boosting") + 
+  ggtitle("Figure 12: Relative influence of variables using boosting") + 
   labs(x = "Property Price", y = "Relative influence") 
 #  scale_y_discrete(labels=c("fjhaed"="Hæðir")) Virkar ekki. 
  
