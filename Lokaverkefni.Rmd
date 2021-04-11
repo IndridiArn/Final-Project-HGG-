@@ -1,508 +1,23 @@
----
-title: "Lokaverkefni nafn hér"
-author: "Bergrós Skúladóttir, Indriði Arnaldsson & Íris Aníta Eyþórsdóttir"
-output:
-  prettydoc::html_pretty:
-    theme : hpstr
-    highlight: github
-    toc: true
-    toc_depth: 2
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = F, message = F, warning = F, error = F)
-```
-
-```{css, echo=FALSE, class.output="scroll-100"}
-.scroll-100 {
-  max-height: 300px;
-  overflow-y: auto;
-  bakground-color:inherit;
-}
-pre[class] {
-  max-height: 160px;
-}
-```
-
-```{r}
-library(tidyverse)
-library(ggridges)
-library(data.table)
-library(gridExtra)
-library(corrplot)
-library(kableExtra)
-library(glmnet)
-options(scipen = 999)
-library(randomForest)
-library(gbm)
-library(scales)
-library(tree)
-```
-
-## Introduction 
-In this assignment we will carry out an analysis of a dataset containing information of about 40 thousand real estates sold in Iceland from 2008 to 2018. The origin of the data can be traced to the National Registry of Iceland which performs an evaluation of housing prices every year. 
-
-In the first part of the assignment we will explore the data visually. In the second part we will predict sale prices using x and x methods. In the third part we will predict the values of x (categorical variable) using the x and x methods. 
-
-The dataset contains many variables, some of which have been excluded from analysis. For this assignment we will focus on data concerning the Capital Region of Iceland. The resulting dataset contains approximately 35 thousand observations and 17 variables regarding housing prices, municipality, age of construction, property type and property area among other. We have included only properties that are single-family houses or apartment buildings. 
-
-## Reading data and cleanup
-```{r}
-data <- read_delim("https://www.skra.is/library/Samnyttar-skrar-/Fyrirtaeki-stofnanir/Fasteignamat-2019/gagnasafn_ib_2018.csv", ";", escape_double = FALSE, locale = locale(encoding = "ISO-8859-1"),
-                                     trim_ws = TRUE)
-data <- data %>% select(kdagur, nuvirdi, byggar, lyfta, ibm2, fjhaed, fjbilsk, fjbkar, fjsturt, fjklos, fjeld, fjherb, fjstof, fjgeym, matssvaedi, ibteg, svfn) %>%
-  filter(matssvaedi < 1000) %>%
-  mutate(lyfta = ifelse(lyfta >= 1, 1, 0)) %>%
-  mutate(ibteg = ifelse(ibteg == 11, 1, 0)) %>%
-  mutate_at("lyfta", factor) %>%
-  mutate_at("matssvaedi", as.character) %>%
-  mutate_at("ibteg", factor) 
-         
-  
-data$svfn <- recode_factor(data$svfn, `0000` = "Reykjavik", `1000`= "Kopavogur", `1100` = "Seltjarnarnes",`1300` = "Gardabaer", `1400` = "Hafnarfjordur", `1604` = "Mosfellsbaer")
-data$kdagur <- as.Date(data$kdagur, format = "%d.%m.%Y")
-data$yearkeypt <- format(data$kdagur, format="%Y")
-data$yearkeypt <- as.numeric(data$yearkeypt)
-data$age <- (as.numeric(data$yearkeypt)-data$byggar)
-data <- select(data, -kdagur, -byggar)
-data$matssvaedi <- recode_factor(data$matssvaedi, `11`="Rvk:Vesturbær", `20` = "Rvk:Miðbær", `25`="Rvk:Miðbær", `31`="Rvk:Miðbær", `70`="Rvk:Vesturbær", `72`="Rvk:Vesturbær", `75`="Rvk:Vesturbær", `80`="Rvk:Hlíðar", `85`="Rvk:Bústaðarhverfi", `90`="Rvk:Laugardalur", `91`="Rvk:Bústaðarhverfi", `100`="Rvk:Laugardalur", `110`="Rvk:Grafarvogur", `120`="Rvk:Grafarvogur", `130`="Rvk:Grafarvogur", `140`="Rvk:Grafarvogur", `150`="Rvk:Breiðholt", `160`="Rvk:Breiðholt", `161`="Rvk:Breiðholt", `170`="Rvk:Breiðholt", `180`="Rvk:Grafarholt", `181`="Rvk:Grafarholt", `200`="Rvk:Árbær", `210`="Rvk:Árbær", `220`="Rvk:Árbær", `270`="Rvk:Árbær", `280`="Rvk:Bústaðarhverfi", `281`="Rvk:Bústaðarhverfi", `282` ="Rvk:Bústaðarhverfi", `283`="Rvk:Bústaðarhverfi", `284`="Rvk:Bústaðarhverfi", `290`="Rvk:Kjalarnes",
-                                 `300`="Kóp:Vesturbær",`320`="Kóp:Austurbær",`330`="Kóp:Smárar", `340`="Kóp:Lindir", `350`="Kóp:Hvörf",`351`="Kóp:Kórar",
-                                 `400`="Seltjarnarnes", `500`="Grb:Miðbær", `510`="Grb:Ásar", `511`="Grb:Arnarnes", `520`="Grb:Sjáland", `530`="Grb:Hraunholt", `540`="Grb:Arnarnes", `550`="Grb:Urriðarholt", `560`="Grb:Flatir", `590`="Grb:Annað",`700`="Grb:Álftanes", `600`="Hfj:Miðbær", `620`="Hfj:Holt", `630`="Hfj:Vellir", `640`="Hfj:Ásland", `650`="Hfj:Setberg", `660`="Hfj:Flensborg", `670`="Hfj:Vellir", `680`="Hfj:Holt", `800`="Mos:Miðbær", `810`="Mos:Teigar", `820`="Mos:Leirvogstunga", `830`="Mos:Dalur", `840`="Mos:Hlíðar", `850`="Mos:Helgafell", `890`="Mos:Annað", `999`="Kóp:Annað")
-```
-
-## Part I: Exploratory Analysis
-
-In this part we will explore the data. Property price is an important variable in our dataset and we are interested in exploring the relationship it has with the other variables in our data set. 
-
-```{r, fig.align='center'}
-#color theme
-ColorsDT <-  data.table(Group=LETTERS[1:50], Color=c("#e0bba8","#d6a78e","#cd9274", "#c37e59","#b86a41","#9d5b38","#834c2f","#693c25","#4e2d1c","#341e12","#efc699","#eab57a", "#e5a45b","#e1923c","#d88121","#b96e1c","#9a5c17","#7b4912","#5c370e","#3d2409","#d6bdb2", "#caa99a","#bd9583","#b1816c","#a36e56","#8c5e4a","#744e3d","#5d3f31","#462f25","#2e1f18", "#e8bda0","#e1a983","#da9566","#d48149","#ca6e2f","#ad5e28","#904e22","#733f1b","#562f14", "#391f0d","#d9bfae","#ceab96","#c3987d","#b88465","#aa714e","#926143","#7a5138","#61412d", "#493021","#302016"), key="Group")
-set.seed(4)
-#núvirði skoðað útfrá:
-#(1)svfn
-f1 <- data %>% ggplot(aes(x=nuvirdi/1e3,y=svfn, fill=svfn)) +
-  geom_density_ridges_gradient() +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(),
-        legend.position = "none") + 
-  scale_x_continuous(labels = label_number(suffix = " m.ISK"), limits=c(0,100), breaks=seq(0,100,by=50)) +
-  scale_fill_manual(values=ColorsDT$Color) + 
-  labs(y = " ", x = "Property Price")
-#(2)matssvaedi
-f2 <- data %>% ggplot(aes(x=nuvirdi/1e3,y=matssvaedi, fill=svfn)) +
-  geom_density_ridges_gradient() +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(),
-        legend.position = "none") + 
-  ggtitle(" ") +   
-  scale_x_continuous(labels = label_number(suffix = " m.ISK"), limits=c(0,100), breaks=seq(0,100,by=50)) +
-  scale_fill_manual(values=ColorsDT$Color) + 
-  labs(y = " ", x = "Property Price")
-grid.arrange(f1,f2,nrow=1,top="Figure 1: Property price based on municipality and neighbourhood")
-```
-
-In figure 1 we see the property prices based on the municipality on the one hand, and neighbourhood on the other. Overall, the property prices seem to have a fairly normal distribution across the municipalities. Property prices in Reykjavík appear to be the lowest, perhaps because the properties are smaller. The prices for properties in two neighbourhoods in Garðabær and in Hlíðar appear to be, on average, higher than other neighbourhoods in our dataset. 
-
-```{r, fig.align = 'center'}
-#(3)yearkeypt
-data %>% 
-  ggplot(aes(x=nuvirdi/1e3,y=as.factor(yearkeypt), fill=as.factor(yearkeypt))) +
-  geom_density_ridges_gradient() +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(),
-        legend.position = "none", plot.title = element_text(hjust = 0.5)) + 
-  ggtitle(" ") + scale_x_continuous(labels = label_number(suffix = " m.ISK"), limits=c(0,100), breaks=seq(0,100,by=20)) + 
-  scale_fill_manual(values=ColorsDT$Color) + 
-  labs(y = " ", x = "Property Price") + 
-  ggtitle("Figure 2: Property price by year of sale")
-```
-
-In figure 2 we can see the property price by year of sale. Property prices have gradually increased over the years. The average property price over the years 2012 to 2018 is approximately 37 million isk ($\mu \approx$ `r round(mean(data$nuvirdi))`).  
-
-```{r, fig.align = 'center'}
-#(4)fj breytunar
-ff <- function(x){
-data %>%
-  group_by(bla = as.factor(x)) %>%
-  summarise(price = round(mean(nuvirdi/1e3))) %>% 
-   mutate(Label=paste0(price), "m.ISK") %>%
-  ggplot(aes(x=price,y=bla, fill=bla)) + 
-    geom_col() +
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), 
-          legend.position = "none") +
-    scale_fill_manual(values=sample(ColorsDT$Color)) + geom_text(aes(label=price), nudge_x = -10, col = "white")
-}
-p <- scale_x_continuous(labels = label_number(suffix = " m.ISK"), limits=c(0,200))
-q <- scale_x_continuous(labels = label_number(suffix = " m.ISK"), limits=c(0,140), breaks = seq(0,140,by=65))
-grid.arrange(ff(data$fjhaed)+ 
-               labs(y = "Floors", x = " ")+p, ff(data$fjbilsk) + 
-               labs(y = "Parking spaces", x = " ")+p, ff(data$fjbkar) + 
-               labs(y = "Baths", x = " ")+p, ff(data$fjsturt) + 
-               labs(y = "Showers", x = " ")+p, ff(data$fjklos) + 
-               labs(y = "Toilets", x = " ")+p, ff(data$fjeld) + 
-               labs(y = "Kitchens", x = " ")+p, top= "Figure 3: Mean property price by various elements")
-grid.arrange(ff(data$fjstof) + 
-               labs(y = "Living Rooms", x = " ")+q, ff(data$fjgeym) + 
-               labs(y = "Storage Rooms", x = " ")+q, ff(data$fjherb) + 
-               labs(y = "Rooms", x = " ")+q, nrow=1)
-```
-
-Here above we see plots of property price according to various property attributes. For example, properties that have 5 toilets are more expensive than those with fewer toilets, and properties with 3 kitchens appear to be the most expensive. 
-
-```{r, fig.align = 'center'}
-#(5)íbuðir með/án lyftu (bara fjölbýlishús)
-# búum til nýtt gagnasafn sem inniheldur bara fjölbýlishús
-data_fjolbylishus <- data %>% filter(ibteg == 0) %>%
-  mutate(lyfta = ifelse(lyfta == 1, "Yes", "No")) %>%
-  group_by(svfn, lyfta) %>%
-  summarise(nuvirdi=mean(nuvirdi))
-datt <- data_fjolbylishus %>%
-  pivot_wider(names_from = svfn, values_from=nuvirdi)
-dat <- datt[-1]
-Heild <- apply(dat,2,sum)
-mism <- c(dat[2,])-(dat[1,])
-tt <- paste(round((mism)/Heild,2)*100,"%")
-tt <- t(tt)
-data_fjolbylishus %>%
-  ggplot() + geom_bar(aes(y=nuvirdi/1e3,x=svfn, fill=lyfta), stat= "identity", position = "dodge") +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank()) + 
-  ggtitle("Figure X: Mean prices for apartments by municipality and elevator status") + 
-  scale_y_continuous(labels = label_number(suffix = " m.ISK"), limits=c(0,45), breaks=seq(0,45,by=10)) + 
-  scale_fill_manual(name = "Elevator", values=sample(ColorsDT$Color)) + 
-  labs(x = " ", y = "Apartment Price") + annotate(geom="text", y=20,x="Reykjavik", label= paste("+",tt[1]), col="white")+ annotate(geom="text", y=20,x="Kopavogur", label= paste("+",tt[2]), col="white")+ annotate(geom="text", y=20,x="Seltjarnarnes", label= paste("+",tt[3]), col="white")+ annotate(geom="text", y=20,x="Gardabaer", label= paste("+",tt[4]), col="white")+ annotate(geom="text", y=20,x="Hafnarfjordur", label= paste("+",tt[5]), col="white")+ annotate(geom="text", y=20,x="Mosfellsbaer", label= paste("+",tt[6]), col="white")
-```
-
-In figure 3 we see the average property price of apartments based on whether the building has an elevator or not. Apartments in buildings with an elevator are on average more expensive. We see the percentage increase in apartments that are in buildings with an elevator. Seltjarnarnes is the only municipality where having an elevator does not increase the propery price.  
-
-```{r, fig.align = 'center'}
-# verð út frá aldri byggingar og tegund húsnæðis.
-f3 <- data %>% 
-  mutate(ibteg=ifelse(data$ibteg == 1, "Single-family house", "Apartment building"))
-ggplot(f3, aes(x=nuvirdi/1e3,y=age, group = ibteg, color = ibteg)) +
-  geom_smooth() + 
-  ggtitle("Figure 4: Property price based on age and type of property") +
-  labs(x = "Property price", y = "Age of property") + 
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), 
-        plot.title = element_text(hjust = 0.5)) +
-   scale_x_continuous(labels = label_number(suffix = " m.ISK"), limits=c(0,100), breaks=seq(0,100,by=25)) + 
-    scale_color_manual(name = "Type of property",values = sample(ColorsDT$Color))
-```
-
-In figure 4 we have the average property price based on age and type of property. Single-family houses are on average more expensive than apartment buildings and the older the property the more inexpensive it is. Age appears to become irrelevant for single-family houses priced 50 million isk and above.   
-
-```{r, fig.align = 'center'}
-# price per square meter by municipality
-data <- data %>% 
-  mutate(fermetraverd = nuvirdi/ibm2)
-ggplot(data, aes(x = fermetraverd, y = svfn, fill = svfn)) +
-  geom_density_ridges_gradient() +
-  labs(x= "Price per square meter", y = "Municipality") +
-  ggtitle("Figure 5: Price per square meter by municipality") + 
-  theme(plot.title = element_text(hjust = 0.5)) + 
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        panel.background = element_blank(), legend.position = "none") + 
-  scale_fill_manual(values = sample(ColorsDT$Color)) + 
-  scale_color_manual(name = "Type of property",values=sample(ColorsDT$Color)) +
-  xlim(c(0, 75))
-```
-
-In figure 5 we see price per square meter by municipality. We can gather that prices per square meter are a bit higher for properties in Garðabær and Seltjarnarnes (and Mosfellsbær to a degree) than for properties in the other municipalities. 
-
-```{r}
-#Corrplot allar numeric breytur
-da <- data %>%
-  dplyr::select(where(is.numeric))
-da <- na.omit(da)
-colnames(da) <- c("Pr.Price","Sqm","Floors","Parking","Baths","Showers","Toilets","Kitchens","Rooms","Liv.r.", "Storage","Sale.Year", "Age", "Sqm.Price")
-par(xpd=TRUE)
-corrplot.mixed(cor(da), lower.col = "#d88121", number.cex=0.7, tl.pos = "lt", upper.col = "#8c5e4a", tl.col="#341e12", tl.cex=0.7, tl.srt = 45, title = "Figure 6: Correlation plot of property attributes", mar=c(0,0,4,0))
-```
-
-A correlation plot of 14 property attributes can be seen on figure 6. Price of properties appears to have a moderately strong positive correlation with the size of properties (in square meters), year of sale and number of rooms, living rooms, floors, showers and toilets in a property. 
-
-The last five attributes mentioned here above also appear to have a moderately strong postive relationship with each other. 
-
-## Part II: Predicting sale prices 
-
-In this part we will predict sales prices using the Lasso and boosting methods. 
-
-#### The lasso
-
-```{r, fig.align = 'center'}
-set.seed(4)
-blabb <- data %>% select(-matssvaedi)
-x <- model.matrix(nuvirdi~., blabb)[,-1]
-grid <- 10^seq(2,-4, by=-0.1)
-train <- sample(1:nrow(x),nrow(x)*0.7)
-Tr <- blabb[train,]
-y <- Tr$nuvirdi
-lasso.cv <- cv.glmnet(x[train,],
-                      y,
-                      alpha=1,
-                      lambda = grid)
-bestlam <- lasso.cv$lambda.min
-bestmse <- lasso.cv$cvm[lasso.cv$lambda.min]
-data.frame(lambda = lasso.cv$lambda, 
-           cv.mse = lasso.cv$cvm, 
-           nonzero = lasso.cv$nzero) %>%
-  ggplot(aes(x = lambda, y = cv.mse,
-             col = ifelse(lambda==10, "#493021","#d88121"))) + 
-  geom_point(size=3) + 
-  geom_line() +
-  scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
-               labels = trans_format("log10", math_format(10^.x))) +
-  scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
-               labels = trans_format("log10", math_format(10^.x))) +
-  scale_color_identity() + xlab( expression(lambda)) + ylab("Cross-Validation MSE") +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        panel.background = element_blank(), legend.position = "none", plot.title = element_text(hjust = 0.5)) + 
-  ggtitle("Figure 7: Lasso Cross-Validation") + 
-  annotate(geom="text",y=10^8.1438, x=10^0, label= expression(paste(lambda, "=10")))
-```
-
-Our optimal value of $\lambda$ is log10(`r round(bestlam,2)`), for minimum test MSE. The test MSE is`r round(bestmse,2)` 
-
-```{r, fig.align = 'center'}
-library(reshape2)
-lasso.mod <- glmnet(x[train,],
-                    y,
-                    alpha=1,
-                    standardize = T,
-                    metric="mse",
-                    lambda = bestlam)
-beta <- coef(lasso.mod)
-plot <- as.data.frame(as.matrix(beta))
-plot$coef <- row.names(plot)
-plot <- reshape2::melt(plot, id="coef")
-plot$variable <- as.numeric(gsub("s","",plot$variable))
-plot$lambda <- lasso.mod$lambda[plot$variable+1]
-haha <- plot[-1,] %>%
-  filter(value>0) %>%
-  arrange(-value)
-rownames(haha) <- c("Seltjarnarnes", "Garðabær", "Parking", "Toilets", "Prop. Type", "Sales Year", "Showers", "Living rooms", "Elevator", "Rooms", "Storage", "Bathtubs", "Kópavogur", "Price per Sqm", "Sqm")
-haha %>%
-  ggplot(aes(value,reorder(rownames(haha),value), col=coef)) + geom_point(show.legend = F, size = 3)+ 
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        panel.background = element_blank(), legend.position = "none") + 
-  scale_fill_manual(values = sample(ColorsDT$Color)) + 
-  scale_color_manual(name = "Type of property",values=sample(ColorsDT$Color)) + labs(x="Coefficient", y=" ") + ggtitle(expression(paste("Figure 8: Predictors with non-zero Lasso coefficients with ", lambda, " = 10")))
-test <- blabb[-train,]
-lasso.pred <- predict(lasso.mod, s=bestlam, newx=x[train,])
-lasso.trainmse <- round(mean(lasso.pred[,1])/1e3,2)
-lasso.pred. <- predict(lasso.mod, s=bestlam, newx=x[-train,])
-lassomse. <- round(mean(lasso.pred.[,1])/1e3,2)
-#test R squared
-r2.lasso <- percent(1-mean((lasso.pred.[,1]-test$nuvirdi)^2)/mean((mean(test$nuvirdi)-test$nuvirdi)^2))
-#train R squared
-r2train.lasso <- percent(lasso.mod$dev.ratio)
-```
-
-The Lasso approach found `r nrow(haha)` important coefficients. The model explained around `r r2train.lasso` of variance ($R^2$) in property price for the training data and around `r r2.lasso` for the test data. With $\lambda$ set to log(10) training error was around `r lasso.trainmse` m.ISK and test error around `r lassomse.` m.ISK. 
-
-The main issue with this approach is blindness regarding correlated/confounding variables.  
-  
-```{r, fig.align = 'center'}
-gaga <- cbind(lasso.pred,y)
-gaga <- as.data.frame(gaga)
-colnames(gaga) <- c("pred", "true")
-g1 <- gaga %>%
-  ggplot(aes(x=pred/1e3,y=true/1e3)) + geom_point(col = "#e0bba8")+ 
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        panel.background = element_blank(), legend.position = "none") +  labs(y=" ", x=" ") + 
-        geom_abline(slope=1,intercept = 0,lty=2, col= "#302016") +
-scale_x_continuous(labels = label_number(suffix = " m.ISK"), limits=c(0,150)) +
-  scale_y_continuous(labels = label_number(suffix = " m.ISK"), limits=c(0,150))
-g2 <- gaga %>%
-  ggplot(aes(x=pred/1e3,y=true/1e3)) + geom_point(col = "#e0bba8")+ 
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        panel.background = element_blank(), legend.position = "none") +  labs(y=" ", x=" ") + 
-        geom_abline(slope=1,intercept = 0,lty=2, col= "#302016") +
-scale_x_continuous(labels = label_number(suffix = " m.ISK"), limits=c(0,150),breaks = seq(0,150, by=50)) +
-  scale_y_continuous(labels = label_number(suffix = " m.ISK"))
-grid.arrange(g2,g1, nrow=1,top="Figure 9: Lasso predicted versus observed property prices", bottom="Predicted", left="Observed")
-```
-
-In Figure 9 we see visually the relationship between the Lasso´s predicted values and the observed values. The right graph includes all values, clearly there is an extreme value at the top. 
-  The left graph is a close up to all the values excluding the extreme value. The relationship seems stronger for lower priced property but starts to gradually worsen as the price goes up.
-
-#### Boosting
-
-```{r, warning = F, message = F, echo = F, fig.align = 'center'}
-set.seed(1)
-TRAIN <- sample(1:nrow(data), nrow(data)*0.7)
-train.set <- data[TRAIN,]
-test.set <- data[-TRAIN,]
-# Tuning lambda
-lambdaGrid <- seq(-1, 1, length.out = 20) # Typical values are 0.01 or 0.001
-lambdas <- 10^lambdaGrid
-test.MSE <- rep(NA, length(lambdas)) #define list to store training errors
-for (i in 1:length(lambdas)) {
-  GBM.boost <- gbm(nuvirdi ~ ., data = train.set,
-                     distribution = "gaussian", 
-                     shrinkage = lambdas[i])
- 
-   boost.predict <- predict(GBM.boost, test.set, 
-                                    n.trees = 100) #breyta þessu í 1000 síðar. Ekki hægt að overfitta í boosting? 
-   test.MSE[i] <- round(mean((boost.predict - test.set$nuvirdi)^2), 2)
-}
-min.testMSE <- min(test.MSE) # gives the lowest test MSE
-min.lambda. <- lambdas[which.min(test.MSE)] # gives the lambda corresponding to lowest test
-min.lambda <- round(min.lambda.,2)
-data.frame(mse=test.MSE, 
-           lambda=lambdas) %>%
-  ggplot(aes(x=lambda,y=test.MSE,
-             col= ifelse(lambda==min.lambda., "#493021","#d88121"))) +
-  geom_point(size=3) + 
-  geom_line() +
-  scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
-               labels = trans_format("log10", math_format(10^.x))) +
-  scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
-               labels = trans_format("log10", math_format(10^.x))) +
-  scale_color_identity() + 
-  xlab( expression(paste("Shrinkage value(", lambda, ")"))) + 
-  ylab("Cross-Validation MSE") +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        panel.background = element_blank(), legend.position = "none", plot.title = element_text(hjust = 0.5)) + 
-  ggtitle("Figure 10: Test MSE for a range of lambda values") + 
-  annotate(geom="text",y=10^25, x=10^-0.1, label= expression(paste(lambda, "= 0.7")))
-```
-
-Here we compute the test error as a function of the shrinkage value. Our optimal $\lambda$ is `r min.lambda` for the minimum test MSE. The minimum test MSE is `r min.testMSE`. 
-SLEPPA því að nefna minimum test MSE? 
-
-```{r, fig.align = 'center'}
-boost <- gbm(nuvirdi ~ ., data = train.set,
-             distribution = "gaussian", 
-             shrinkage = 0.7, # common lambda to use (0.01 or 0.001). BREYTA í BEST LAMBDA
-             n.trees = 100)
-library(vip)
-vip(boost, aesthetics = list(fill = c("#d48149","#da9566","#ca6e2f","#ad5e28","#e1a983","#e8bda0","#2e1f18",
-                                      "#462f25","#5d3f31","#904e22")), 
-    mapping = aes_string(fill = "Variable")) + 
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(),
-        plot.title = element_text(hjust = 0.5)) + 
-  ggtitle("Figure 12: Relative influence of variables using boosting") + 
-  labs(x = "Property Price", y = "Relative influence") 
-#  scale_y_discrete(labels=c("fjhaed"="Hæðir")) Virkar ekki. 
- 
-# Reiknað út RMSE 
-library(Metrics)
-predictions <- boost %>% predict(test.set)
-rmse.boost <- rmse(predictions, test.set$nuvirdi)
-```
-
-LAGA: y-axis á plottinu. 
-
-LAGA TÚLKUN. There are four variables that have high relative importance, they are square meters of property, price per square meter, the number of bathrooms and year the property was bought. Square meters per property is by far the most important variable. In figure X and X in part I we learned that the more square meters and bathrooms are in a property the more expensive it is. We also learned that property prices increase the younger the property is.
-
-Fjalla hér aðeins um muninn á test MSE hjá Lasso og Boosting. Bera saman hvaða breytur voru taldar mikilvægastar þegar kemur að því að spá fyrir um núvirði.
-```{r}
-tafla <- data.frame(Boosting <- c(MSE=paste0(round(min.testMSE/1e6,2)," m.ISK"),
-          RMSE=paste0(round(rmse.boost/1e3,2)," m.ISK"),
-          Variables="10"),
-          Lasso <- c(MSE=paste0(lassomse.," m.ISK"),
-           RMSE=paste0(round(rmse(lasso.pred.[1], y)/1e3,2), " m.ISK"),
-           Variables=nrow(haha)))
-colnames(tafla) <- c("Boosting","Lasso")
-t(tafla) %>%
-  kable(align="c", caption = "Table X: Comparison of Boosting and Lasso") %>%
-  kable_styling(full_width = F)
-```
-Getum sett hér inn töflu fyrir RMSE og test MSE fyrir bæði Lasso og Boosting. 
-Boosting: the test MSE is `r min.testMSE`and the RMSE is is `r rmse.boost`  
-
-Í Boosting eru í raun þrír tuning parameters: 1) lambda, 2) fjöldi trees (n.trees) og 3) mtry: variables considered at each split. Ég reiknaði út test errorið as a function of lambda en það væri líka hægt að gera út frá trees (getum kannski skoðað það ef tími gefst). Við gerum þetta allavega bara út frá lambda í verkefnunum. Annað: Random forest er bara með einn tuning parameter (mtry) og er töluvert einfaldara, væri hægt að framkvæma það líka í staðinn. 
-
-
-## Part II
-
-Here we will predict whether a property is old or new based on the age of the property. We've created a new variable that takes on two values. If the age of a property is higher than the median age of all the properties (32 years) it is categorised as an old property. If the age of a property is lower than the median age of all properties, it is categorised as a new property. 
-
-We will use quadratic discriminant analysis, logistic regression and random forest to predict whether a property is old or new.
-
-```{r}
-# Búum til nýtt gagnasafn. Breytum breytunni AGE í factor breytu. Tekur gildið 1 = ný bygging, 0 = gömul bygging. Út frá miðgildi AGE. 
-set.seed(1)
-data2 <- data %>% mutate(AgeNew = (ifelse(age < 32, 1, 0))) %>% 
-  select(-age, -matssvaedi, -fermetraverd) %>%
-  mutate_at("AgeNew", factor) %>%
-  na.omit()  # sjá colSums(is.na(data)) 
-#Skiptum aftur í training og test set. 
-train2 <- sample(1:nrow(data2), nrow(data2)*0.7)
-train.set2 <- data2[train2,]
-test.set2 <- data2[-train2,]
-```
-
-#### Quadratic discriminant analysis
-
-```{r}
-library(MASS)
-QDA.fit <- qda(AgeNew ~ ., data = train.set2)
-QDA.pred <- predict(QDA.fit, test.set2)
-#QDA.fit # hvaða upplýsingar fáum við úr þessu outputti? 
-# Lets look at the confusion matrix for LDA to see how well the LDA fit works with the test.set
-kabletable <- table(QDA.pred$class,test.set2$AgeNew)
-rownames(kabletable) <- c("Old", "New")
-colnames(kabletable) <- c("Old", "New")
-kbl(kabletable) %>% 
-  kable_styling(full_width = F, position = "center") %>%
-  add_header_above(c(" " = 1, "True values" = 2))
-meanQDA <- round(1-(mean(QDA.pred$class == test.set2$AgeNew)), 2)
-meanQDAperc <- percent(meanQDA)
-```
-
-LAGA þessa ógeðslegu TÖFLU: Vantar (1) Row header, (2) Litaþemað, (3) Endurskýra 0 = Old, 1 = New. (4) Gera True values að subtitle header og bæta við main header sem heitir t.d. "Table X. True and predicted values for age of buildings".
-
-The test error rate of the LDA model is  `r meanQDA`, meaning the model predicted incorrectly nearly  `r meanQDAperc` of the time. 
-Umfjöllun hér um false positive og false negative rate (sjá glósur).
-
-#### Logistic regression 
-```{r}
-LOG.fit <- glm(AgeNew ~ ., data = train.set2,
-               family = "binomial")
-#summary(LOG.fit) #segir okkur hvaða coefficients eru marktækir
-LOG.prob <- predict(LOG.fit, newdata = test.set2, 
-                    type = "response")
-LOG.pred <- rep(0, nrow(test.set2))
-LOG.pred[LOG.prob > 0.5] <- 1 #define values as 1 (new property) if probs are above 0.5. 
-kabletable2 <- table(LOG.pred, test.set2$AgeNew)
-rownames(kabletable2) <- c("Old", "New")
-colnames(kabletable2) <- c("Old", "New")
-kbl(kabletable2) %>% 
-  kable_styling(full_width = F, position = "center") %>%
-  add_header_above(c(" " = 1, "True values" = 2))
-meanLOG <- round(1-(mean(LOG.pred == test.set2$AgeNew)), 2)
-meanLOGperc <- percent(meanLOG)
-```
-LAGA TÖFLU HÉR LÍKA. 
-
-Bæta við umfjöllun um hvaða breytur eru marktækar?
-
-The test error rate of the LDA model is  `r meanLOG`, meaning the model predicted incorrectly nearly  `r meanLOGperc` of the time. Similar result to that of QDA.   
-
-```{r}
-old <- data.frame(QDA = c(paste0(round(sum(diag(kabletable))/sum(kabletable)*100),"%"),
-                          paste0(round(prop.table(kabletable)*100),"%")),
-         LR =c(paste0(round(sum(diag(kabletable2))/sum(kabletable2)*100),"%"),
-               paste0(round(prop.table(kabletable2)*100),"%")),
-         row.names = c("Accuracy","True negatives", "False positives", "False negatives", "True positives"))
-old %>%
-  kable() %>%
-  kable_styling(full_width = F)
-```
-
-#### Classification trees and Random forests
-
-
 TODO túlka og mögulega finna betri plot pakka.
 
 
 ```{r}
+
+
 tree.data2 <- tree(AgeNew~.,data=train.set2)
+
 plot(tree.data2)
 text(tree.data2,pretty=0)
+
 tree.pred <- predict(tree.data2,newdata=test.set2, type="class")
+
 #TEST MSE 
 #tree.test.MSE <- mean((tree.pred-test.set2$AgeNew)**2)
+
 pred.table <- table(tree.pred,test.set2$AgeNew)
+
 tree.testMSE <- round(1-mean(tree.pred == test.set2$AgeNew),2)
+
 testMSEperc <- percent(tree.testMSE)
 ```
 
@@ -511,14 +26,22 @@ testMSEperc <- percent(tree.testMSE)
 TODO: Bæta við texta hér. 
 
 ```{r}
+
 tree.data2.cv <- cv.tree(tree.data2)
+
 plot(tree.data2.cv$size,tree.data2.cv$dev,type="b")
+
 prune.tree.data2 <- prune.tree(tree.data2,best=7) 
+
 plot(prune.tree.data2)
 text(prune.tree.data2,pretty=0)
+
 pruned.tree.pred <- predict(prune.tree.data2,newdata=test.set2, type="class")
+
 #pruned.tree.test.MSE <- mean((pruned.tree.pred-test.set2$AgeNew)**2)
+
 pruned.tree.testMSE <- round(1-mean(pruned.tree.pred == test.set2$AgeNew),2)
+
 testMSEperc <- percent(pruned.tree.testMSE)
 ```
 
@@ -529,18 +52,59 @@ TODO: Spurning hvort við viljum vera með öll þessi plot?
 
 
 
-
-Using random Forest 
+Finding out the optimal mtry value for random forrest 
 ```{r}
-randforr_cs <- randomForest(AgeNew~.,data=train.set2,mtry=9,importance=T,ntree=100) #TODO skoða að breyta Ntree og mögulega mtry, því fleiri sem ntree eru því lengri tíma tekur að keyra. 
-pred_randforr <- predict(randforr_cs,newdata = test.set2)
+
+randforr_MSE <- rep(NA,ncol(train.set2)-1)
+
+#þessi skipun tekur um 10 min að keyra í minni tölvu. 
+for (i in 1:(ncol(train.set2)-1)) {
+  randforr_cs <- randomForest(AgeNew~.,data=train.set2,mtry=i,importance=T)
+  pred_randforr <- predict(randforr_cs,newdata = test.set2)
+  randforr_MSE[i] <- mean((pred_randforr==test.set2$AgeNew))
+  #print("Höfum keyr í gegn")
+  #print(i)
+  #print("sinnum")
+  
+}
+randforr_MSE
+
+
+
+min.cv <- (1-which.max(randforr_MSE))
+best.CV <- which.max(randforr_MSE)
+
+plot(randforr_MSE, type = "b",xlab = "Degree", ylab = "Test MSE", main="Test MSE by number of variables")
+points(best.CV, randforr_MSE[best.CV], col = "darkred",pch = 10,cex =12)
+
+
+
+
+```
+
+
+
+
+Using random Forest with the optimal mtry variable which is `r best.cv`
+```{r}
+#library(rpart)
+library(visreg)
+
+
+randforr_best <- randomForest(AgeNew~.,data=train.set2,mtry=best.CV,importance=T,ntree=1000) #TODO skoða að breyta Ntree og mögulega mtry, því fleiri sem ntree eru því lengri tíma tekur að keyra. 
+pred_randforr <- predict(randforr_best,newdata = test.set2)
 randforr_MSE <- round(1-mean((pred_randforr==test.set2$AgeNew)),2)
-plot(randforr_cs) # TODO breyta þessu plotti, ég hélt að þetta myndi ekki virka en viti menn.
-#text(randforr_cs,pretty=0)
+
+plot(randforr_best) # TODO breyta þessu plotti, ég hélt að þetta myndi ekki virka en viti menn.
+#text(randforr_best,pretty=0)
   
   
-varImpPlot(randforr_cs)
+varImpPlot(randforr_best)
+
 randforr_MSE.perc <- percent(randforr_MSE)
+
+#visreg(randforr_best)     Er að leita að betri pakka til að plotta. 
+#autoplot(randforr_best)
 ```
 `r randforr_MSE.perc`
 
