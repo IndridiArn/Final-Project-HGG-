@@ -92,7 +92,8 @@ f2 <- data %>% ggplot(aes(x=nuvirdi/1e3,y=matssvaedi, fill=svfn)) +
   geom_density_ridges_gradient() +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(),
         legend.position = "none") + 
-  ggtitle(" ") +   scale_x_continuous(labels = label_number(suffix = " m.ISK"), limits=c(0,100), breaks=seq(0,100,by=50)) +
+  ggtitle(" ") +   
+  scale_x_continuous(labels = label_number(suffix = " m.ISK"), limits=c(0,100), breaks=seq(0,100,by=50)) +
   scale_fill_manual(values=ColorsDT$Color) + 
   labs(y = " ", x = "Property Price")
 grid.arrange(f1,f2,nrow=1,top="Figure 1: Property price based on municipality and neighbourhood")
@@ -168,7 +169,7 @@ data_fjolbylishus %>%
   labs(x = " ", y = "Apartment Price") + annotate(geom="text", y=20,x="Reykjavik", label= paste("+",tt[1]), col="white")+ annotate(geom="text", y=20,x="Kopavogur", label= paste("+",tt[2]), col="white")+ annotate(geom="text", y=20,x="Seltjarnarnes", label= paste("+",tt[3]), col="white")+ annotate(geom="text", y=20,x="Gardabaer", label= paste("+",tt[4]), col="white")+ annotate(geom="text", y=20,x="Hafnarfjordur", label= paste("+",tt[5]), col="white")+ annotate(geom="text", y=20,x="Mosfellsbaer", label= paste("+",tt[6]), col="white")
 ```
 
-In figure 3 we see the average property price of apartments based on whether the building has an elevator or not. Apartments in buildings with an elevator are on average more expensive. We see the percentage increase in apartments that are in buildings with an elevator. Seltjarnarnes is the only municipality where having an elevator does not increase the propery price. This could peh  
+In figure 3 we see the average property price of apartments based on whether the building has an elevator or not. Apartments in buildings with an elevator are on average more expensive. We see the percentage increase in apartments that are in buildings with an elevator. Seltjarnarnes is the only municipality where having an elevator does not increase the propery price.  
 
 ```{r, fig.align = 'center'}
 # verð út frá aldri byggingar og tegund húsnæðis.
@@ -184,7 +185,7 @@ ggplot(f3, aes(x=nuvirdi/1e3,y=age, group = ibteg, color = ibteg)) +
     scale_color_manual(name = "Type of property",values = sample(ColorsDT$Color))
 ```
 
-In figure 4 we have the average property price based on age and type of property. Single-family houses are on average more expensive than apartment buildings and the older the property the more inexpensive it is. Age appears to be irrelevant for single-family houses priced 50 million isk and above.   
+In figure 4 we have the average property price based on age and type of property. Single-family houses are on average more expensive than apartment buildings and the older the property the more inexpensive it is. Age appears to become irrelevant for single-family houses priced 50 million isk and above.   
 
 ```{r, fig.align = 'center'}
 # price per square meter by municipality
@@ -214,7 +215,7 @@ par(xpd=TRUE)
 corrplot.mixed(cor(da), lower.col = "#d88121", number.cex=0.7, tl.pos = "lt", upper.col = "#8c5e4a", tl.col="#341e12", tl.cex=0.7, tl.srt = 45, title = "Figure 6: Correlation plot of property attributes", mar=c(0,0,4,0))
 ```
 
-A correlation plot of 12 property attributes can be seen on figure 6. Property price appears to have a moderately strong positive correlation with area (property size in square meters) and number of rooms, living rooms, floors, showers and toilets in a property. 
+A correlation plot of 14 property attributes can be seen on figure 6. Price of properties appears to have a moderately strong positive correlation with the size of properties (in square meters), year of sale and number of rooms, living rooms, floors, showers and toilets in a property. 
 
 The last five attributes mentioned here above also appear to have a moderately strong postive relationship with each other. 
 
@@ -254,7 +255,7 @@ data.frame(lambda = lasso.cv$lambda,
                labels = trans_format("log10", math_format(10^.x))) +
   scale_color_identity() + xlab( expression(lambda)) + ylab("Cross-Validation MSE") +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        panel.background = element_blank(), legend.position = "none") + ggtitle("Figure X: Lasso Cross-Validation") + annotate(geom="text",y=10^8.1438, x=10^0, label= expression(paste(lambda, "=10")))
+        panel.background = element_blank(), legend.position = "none") + ggtitle("Figure 7: Lasso Cross-Validation") + annotate(geom="text",y=10^8.1438, x=10^0, label= expression(paste(lambda, "=10")))
 ```
 
 Our optimal value of $\lambda$ is log10(`r round(bestlam,2)`), for minimum MSE. 
@@ -278,11 +279,11 @@ haha <- plot[-1,] %>%
   arrange(-value)
 rownames(haha) <- c("Seltjarnarnes", "Garðabær", "Parking", "Toilets", "Prop. Type", "Sales Year", "Showers", "Living rooms", "Elevator", "Rooms", "Storage", "Bathtubs", "Kópavogur", "Price per Sqm", "Sqm")
 haha %>%
-  ggplot(aes(value,reorder(rownames(haha),value), col=coef)) + geom_point(show.legend = F)+ 
+  ggplot(aes(value,reorder(rownames(haha),value), col=coef)) + geom_point(show.legend = F, size = 3)+ 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         panel.background = element_blank(), legend.position = "none") + 
   scale_fill_manual(values = sample(ColorsDT$Color)) + 
-  scale_color_manual(name = "Type of property",values=sample(ColorsDT$Color)) + labs(x="Coefficient", y=" ") + ggtitle(expression(paste("Figure X: Predictors with non-zero Lasso coefficients with ", lambda, " = 10")))
+  scale_color_manual(name = "Type of property",values=sample(ColorsDT$Color)) + labs(x="Coefficient", y=" ") + ggtitle(expression(paste("Figure 8: Predictors with non-zero Lasso coefficients with ", lambda, " = 10")))
 test <- blabb[-train,]
 lasso.pred <- predict(lasso.mod, s=bestlam, newx=x[train,])
 lasso.trainmse <- round(mean(lasso.pred[,1])/1e3,2)
@@ -305,24 +306,24 @@ colnames(gaga) <- c("pred", "true")
 g1 <- gaga %>%
   ggplot(aes(x=pred/1e3,y=true/1e3)) + geom_point(col = "#e0bba8")+ 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        panel.background = element_blank(), legend.position = "none") +  labs(y=" ", x=" ") + geom_abline(slope=1,intercept = 0,lty=2, col= "#302016") +
+        panel.background = element_blank(), legend.position = "none") +  labs(y=" ", x=" ") + 
+        geom_abline(slope=1,intercept = 0,lty=2, col= "#302016") +
 scale_x_continuous(labels = label_number(suffix = " m.ISK"), limits=c(0,150)) +
   scale_y_continuous(labels = label_number(suffix = " m.ISK"), limits=c(0,150))
 g2 <- gaga %>%
   ggplot(aes(x=pred/1e3,y=true/1e3)) + geom_point(col = "#e0bba8")+ 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        panel.background = element_blank(), legend.position = "none") +  labs(y=" ", x=" ") + geom_abline(slope=1,intercept = 0,lty=2, col= "#302016") +
+        panel.background = element_blank(), legend.position = "none") +  labs(y=" ", x=" ") + 
+        geom_abline(slope=1,intercept = 0,lty=2, col= "#302016") +
 scale_x_continuous(labels = label_number(suffix = " m.ISK"), limits=c(0,150),breaks = seq(0,150, by=50)) +
   scale_y_continuous(labels = label_number(suffix = " m.ISK"))
-grid.arrange(g2,g1, nrow=1,top="Figure X: Lasso predicted versus observed property prices", bottom="Predicted", left="Observed")
+grid.arrange(g2,g1, nrow=1,top="Figure 9: Lasso predicted versus observed property prices", bottom="Predicted", left="Observed")
 ```
 
-In Figure X we see visually the relationship between the Lasso´s predicted values and the observed values. The right graph includes all values, clearly there is an extreme value at the top. 
+In Figure 9 we see visually the relationship between the Lasso´s predicted values and the observed values. The right graph includes all values, clearly there is an extreme value at the top. 
   The left graph is a close up to all the values excluding the extreme value. The relationship seems stronger for lower priced property but starts to gradually worsen as the price goes up.
 
 #### Boosting
-
-Fitting a boosted model to our training data. Tuning the lambda parameter to the lowest test MSE.
 
 ```{r, warning = F, message = F, echo = F}
 # train og x.test
