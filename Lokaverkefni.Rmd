@@ -584,7 +584,7 @@ points(best.CV, randforr_MSE[best.CV], col = "darkred",pch = 10,cex =12)
 
 
 
-Using random Forest with the optimal mtry variable which is `r best.cv`
+Using random Forest with the optimal mtry variable which is `r best.CV`
 ```{r}
 #library(rpart)
 library(visreg)
