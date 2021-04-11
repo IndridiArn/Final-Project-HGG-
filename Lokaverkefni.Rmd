@@ -228,18 +228,15 @@ In this part we will predict sales prices using the Lasso and boosting methods.
 ```{r, fig.align = 'center'}
 set.seed(4)
 blabb <- data %>% select(-matssvaedi)
-
 x <- model.matrix(nuvirdi~., blabb)[,-1]
 grid <- 10^seq(2,-4, by=-0.1)
 train <- sample(1:nrow(x),nrow(x)*0.7)
 Tr <- blabb[train,]
 y <- Tr$nuvirdi
-
 lasso.cv <- cv.glmnet(x[train,],
                       y,
                       alpha=1,
                       lambda = grid)
-
 bestlam <- lasso.cv$lambda.min
 bestmse <- lasso.cv$cvm[lasso.cv$lambda.min]
 data.frame(lambda = lasso.cv$lambda, 
@@ -326,15 +323,12 @@ In Figure 9 we see visually the relationship between the Lasso´s predicted valu
 #### Boosting
 
 ```{r, warning = F, message = F, echo = F, fig.align = 'center'}
-# train og x.test
 set.seed(1)
-#data.Log.nuvirdi <- data
-#data.Log.nuvirdi$nuvirdi <- log(data.Log.nuvirdi$nuvirdi) # nota logarithmann af 
 TRAIN <- sample(1:nrow(data), nrow(data)*0.7)
 train.set <- data[TRAIN,]
 test.set <- data[-TRAIN,]
 # Tuning lambda
-lambdaGrid <- seq(-3, -0.1, length.out = 20) # Typical values are 0.01 or 0.001
+lambdaGrid <- seq(-2, -0.05, length.out = 20) # Typical values are 0.01 or 0.001
 lambdas <- 10^lambdaGrid
 test.MSE <- rep(NA, length(lambdas)) #define list to store training errors
 for (i in 1:length(lambdas)) {
@@ -349,7 +343,6 @@ for (i in 1:length(lambdas)) {
 min.testMSE <- min(test.MSE) # gives the lowest test MSE
 min.lambda. <- lambdas[which.min(test.MSE)] # gives the lambda corresponding to lowest test
 min.lambda <- round(min.lambda.,2)
-
 data.frame(mse=test.MSE, 
            lambda=lambdas) %>%
   ggplot(aes(x=lambda,y=mse,
@@ -415,7 +408,9 @@ Boosting: the test MSE is `r min.testMSE`and the RMSE is is `r rmse.boost`
 
 ## Part II
 
-Here we will predict the values of X using X and X methods. 
+Here we will predict whether a property is old or new based on the age of the property. We've created a new variable that takes on two values. If the age of a property is higher than the median age of all the properties (32 years) it is categorised as an old property. If the age of a property is lower than the median age of all properties, it is categorised as a new property. 
+
+We will use quadratic discriminant analysis, logistic regression and random forest to predict whether a property is old or new.
 
 ```{r}
 # Búum til nýtt gagnasafn. Breytum breytunni AGE í factor breytu. Tekur gildið 1 = ný bygging, 0 = gömul bygging. Út frá miðgildi AGE. 
@@ -424,7 +419,6 @@ data2 <- data %>% mutate(AgeNew = (ifelse(age < 32, 1, 0))) %>%
   select(-age, -matssvaedi, -fermetraverd) %>%
   mutate_at("AgeNew", factor) %>%
   na.omit()  # sjá colSums(is.na(data)) 
-
 #Skiptum aftur í training og test set. 
 train2 <- sample(1:nrow(data2), nrow(data2)*0.7)
 train.set2 <- data2[train2,]
@@ -436,20 +430,14 @@ test.set2 <- data2[-train2,]
 ```{r}
 library(MASS)
 QDA.fit <- qda(AgeNew ~ ., data = train.set2)
-
 QDA.pred <- predict(QDA.fit, test.set2)
-
 #QDA.fit # hvaða upplýsingar fáum við úr þessu outputti? 
-
 # Lets look at the confusion matrix for LDA to see how well the LDA fit works with the test.set
-
 kabletable <- table(QDA.pred$class,test.set2$AgeNew)
 kbl(kabletable) %>% 
   kable_styling(bootstrap_options = c("striped", "hover"), full_width = F, position = "center", stripe_color = "#562f14") %>%
   add_header_above(c(" " = 1, "True values" = 2))
-
 #b1816c","#a36e56","#8c5e4a","#744e3d","#5d3f31","#462f25","#2e1f18", "#e8bda0","#e1a983","#da9566","#d48149","#ca6e2f","#ad5e28","#904e22","#733f1b","#562f14", "#391f0d","#d9bfae","#ceab96","#c3987d","#b88465","#aa714e
-
 meanQDA <- round(1-(mean(QDA.pred$class == test.set2$AgeNew)), 2)
 meanQDAperc <- percent(meanQDA)
 ```
@@ -464,20 +452,14 @@ Umfjöllun hér um false positive og false negative rate (sjá glósur).
 LOG.fit <- glm(AgeNew ~ ., data = train.set2,
                family = "binomial")
 #summary(LOG.fit) #segir okkur hvaða coefficients eru marktækir
-
 LOG.prob <- predict(LOG.fit, newdata = test.set2, 
                     type = "response")
-
 LOG.pred <- rep(0, nrow(test.set2))
-
 LOG.pred[LOG.prob > 0.5] <- 1 #define values as 1 (new property) if probs are above 0.5. 
-
 kabletable2 <- table(LOG.pred, test.set2$AgeNew)
-
 kbl(kabletable2) %>% 
   kable_styling(bootstrap_options = c("striped", "hover"), full_width = F, position = "center", stripe_color = "#562f14") %>%
   add_header_above(c(" " = 1, "True values" = 2))
-
 meanLOG <- round(1-(mean(LOG.pred == test.set2$AgeNew)), 2)
 meanLOGperc <- percent(meanLOG)
 ```
@@ -505,22 +487,14 @@ TODO túlka og mögulega finna betri plot pakka.
 
 
 ```{r}
-
-
 tree.data2 <- tree(AgeNew~.,data=train.set2)
-
 plot(tree.data2)
 text(tree.data2,pretty=0)
-
 tree.pred <- predict(tree.data2,newdata=test.set2, type="class")
-
 #TEST MSE 
 #tree.test.MSE <- mean((tree.pred-test.set2$AgeNew)**2)
-
 pred.table <- table(tree.pred,test.set2$AgeNew)
-
 tree.testMSE <- round(1-mean(tree.pred == test.set2$AgeNew),2)
-
 testMSEperc <- percent(tree.testMSE)
 ```
 
@@ -529,22 +503,14 @@ testMSEperc <- percent(tree.testMSE)
 TODO: Bæta við texta hér. 
 
 ```{r}
-
 tree.data2.cv <- cv.tree(tree.data2)
-
 plot(tree.data2.cv$size,tree.data2.cv$dev,type="b")
-
 prune.tree.data2 <- prune.tree(tree.data2,best=7) 
-
 plot(prune.tree.data2)
 text(prune.tree.data2,pretty=0)
-
 pruned.tree.pred <- predict(prune.tree.data2,newdata=test.set2, type="class")
-
 #pruned.tree.test.MSE <- mean((pruned.tree.pred-test.set2$AgeNew)**2)
-
 pruned.tree.testMSE <- round(1-mean(pruned.tree.pred == test.set2$AgeNew),2)
-
 testMSEperc <- percent(pruned.tree.testMSE)
 ```
 
@@ -561,13 +527,11 @@ Using random Forest
 randforr_cs <- randomForest(AgeNew~.,data=train.set2,mtry=9,importance=T,ntree=100) #TODO skoða að breyta Ntree og mögulega mtry, því fleiri sem ntree eru því lengri tíma tekur að keyra. 
 pred_randforr <- predict(randforr_cs,newdata = test.set2)
 randforr_MSE <- round(1-mean((pred_randforr==test.set2$AgeNew)),2)
-
 plot(randforr_cs) # TODO breyta þessu plotti, ég hélt að þetta myndi ekki virka en viti menn.
 #text(randforr_cs,pretty=0)
   
   
 varImpPlot(randforr_cs)
-
 randforr_MSE.perc <- percent(randforr_MSE)
 ```
 `r randforr_MSE.perc`
@@ -577,4 +541,3 @@ TODO : muna að breyta randomForest í forlykkjur þar sem mtry = (1:ncol(train.
 
 Using the Random forest yields a much better test MSE than the regression tree method. 
 TODO útskýra betur og bera saman við niðurstöðurnar frá QDA og LDA.
-
