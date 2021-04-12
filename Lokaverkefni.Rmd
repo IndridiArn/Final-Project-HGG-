@@ -410,9 +410,9 @@ haha <- plot[-1,] %>%
   mutate(Value = abs(value)) %>% 
   filter(Value>0) %>%
   arrange(-Value)
-rownames(haha) <- c("Seltjarnarnes", "Hafnarfjörður", "Garage", "Floor", "Year Bought", "Property type", "Garðabær","Bathrooms", "Mosfellsbær", "Showers", "Elevator", "Kitchens","Bathtubs","Rooms","Living rooms","Kópavogur","Storage rooms","Size","Age") #keyra coef(lasso.mod) til að sjá hvaða rownames eiga að vera hér
+haha$names <- c("Seltjarnarnes", "Hafnarfjörður", "Garage", "Floor", "Year Bought", "Property type", "Garðabær","Bathrooms", "Mosfellsbær", "Showers", "Elevator", "Kitchens","Bathtubs","Rooms","Living rooms","Kópavogur","Storage rooms","Size","Age") #keyra coef(lasso.mod) til að sjá hvaða rownames eiga að vera hér
 haha %>%
-  ggplot(aes(value,reorder(coef,value),
+  ggplot(aes(value,reorder(names,value),
              col = ifelse(value>=0, "#a36e56","#493021"))) + 
   geom_point(show.legend = F, size = 3)+ 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
