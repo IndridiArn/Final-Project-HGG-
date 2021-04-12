@@ -280,9 +280,10 @@ plot <- reshape2::melt(plot, id="coef")
 plot$variable <- as.numeric(gsub("s","",plot$variable))
 plot$lambda <- lasso.mod$lambda[plot$variable+1]
 haha <- plot[-1,] %>%
+  mutate(value = abs(value)) %>% 
   filter(value>0) %>%
   arrange(-value)
-rownames(haha) <- c("Seltjarnarnes", "Hafnarfjörður", "Garage", "Floor", "Year Bought", "Property type", "Garðabær","Bathrooms", "Mosfellsbær", "Showers", "Elevator",  "Kitchens") #keyra coef(lasso.mod) til að sjá hvaða rownames eiga að vera hér
+rownames(haha) <- c("Seltjarnarnes", "Hafnarfjörður", "Garage", "Floor", "Year Bought", "Property type", "Garðabær","Bathrooms", "Mosfellsbær", "Showers", "Elevator", "Kitchens","Bathtubs","Rooms","Living rooms","Kópavogur","Storage rooms","Size","Age") #keyra coef(lasso.mod) til að sjá hvaða rownames eiga að vera hér
 haha %>%
   ggplot(aes(value,reorder(rownames(haha),value), col=coef)) + geom_point(show.legend = F, size = 3)+ 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
