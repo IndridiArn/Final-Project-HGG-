@@ -40,11 +40,11 @@ library(tree)
 ```
 
 ## Introduction 
-In this assignment we carry out an analysis of a dataset containing information of about 40 thousand real estates sold in Iceland from 2008 to 2018. The origin of the data can be traced to the National Registry of Iceland which performs an evaluation of housing prices every year. 
+In this assignment we carry out an analysis of a dataset containing information of about 40 thousand real estates sold in Iceland from 2008 to 2018. The origin of the data can be traced to the National Registry of Iceland which performs an evaluation of properties worth every year. 
 
-In the first part of the assignment we will explore the data visually. In the second part we will predict sale prices using the lasso and boosting. In the third part we will predict whether a property is old or new based on the age of the property using QDA, logistic regression and random forest. Stick around to see if we cracked the bonus question... 
+In the first part of the assignment we will explore the data visually. In the second part we will predict properties worth using the lasso and boosting methods. In the third part we will predict whether a property is old or new based on the age of the property using QDA, logistic regression and random forest. Stick around to see if we cracked the bonus question... 
 
-The dataset contains many variables, some of which have been excluded from analysis. For this assignment we will focus on data concerning the Capital Region of Iceland. The resulting dataset contains approximately 35 thousand observations and 17 variables regarding housing prices, municipality, age of construction, property type and property area among other. We have included only properties that are single-family houses or apartment buildings. 
+The dataset contains many variables, some of which have been excluded from analysis. For this assignment we will focus on data concerning the Capital Region of Iceland. The resulting dataset contains approximately 35 thousand observations and 17 variables regarding properties worth, municipality, age of construction, property type and property area among other. We have included only properties that are single-family houses or apartment buildings. 
 
 ## Reading data and cleanup
 ```{r}
@@ -74,7 +74,7 @@ data$matssvaedi <- recode_factor(data$matssvaedi, `11`="Rvk:Vesturbær", `20` = 
 
 ## Part I: Exploratory Analysis
 
-In this part we will visually explore the data. Property price is an important variable in our dataset and we are interested in exploring the relationship it has with the other variables in our data set. 
+In this part we will visually explore the data. Property worth is an important variable in our dataset and we are interested in exploring the relationship it has with the other variables in our data set. 
 
 ```{r, fig.align='center'}
 #color theme
@@ -88,7 +88,7 @@ f1 <- data %>% ggplot(aes(x=nuvirdi/1e3,y=svfn, fill=svfn)) +
         legend.position = "none") + 
   scale_x_continuous(labels = label_number(suffix = " m.ISK"), limits=c(0,100), breaks=seq(0,100,by=50)) +
   scale_fill_manual(values=ColorsDT$Color) + 
-  labs(y = " ", x = "Property Price")
+  labs(y = " ", x = "Property Worth")
 #(2)matssvaedi
 f2 <- data %>% ggplot(aes(x=nuvirdi/1e3,y=matssvaedi, fill=svfn)) +
   geom_density_ridges_gradient() +
@@ -97,12 +97,26 @@ f2 <- data %>% ggplot(aes(x=nuvirdi/1e3,y=matssvaedi, fill=svfn)) +
   ggtitle(" ") +   
   scale_x_continuous(labels = label_number(suffix = " m.ISK"), limits=c(0,100), breaks=seq(0,100,by=50)) +
   scale_fill_manual(values=ColorsDT$Color) + 
-  labs(y = " ", x = "Property Price")
-grid.arrange(f1,f2,nrow=1,top="Figure 1: Property price based on municipality and neighbourhood")
+  labs(y = " ", x = "Property Worth")
+grid.arrange(f1,f2,nrow=1,top="Figure 1: Property worth based on municipality and neighbourhood")
+
+ghhh <- data %>%
+  group_by(matssvaedi) %>%
+  summarise(mean = mean(nuvirdi))
+max <- ghhh %>% slice(which.max(mean))
+min <- ghhh %>% slice(which.min(mean))
+
+neigh <- data %>%
+  group_by(svfn) %>%
+  summarise(mean = mean(nuvirdi))
 ```
 
-In figure 1 we see the property prices based on the municipality on one hand, and neighbourhood on the other. The average prices of Garðabær and Seltjarnarnes appear to be slightly higher. The prices for properties in Álftanes and in Hlíðar appear to be, on average, higher than other neighbourhoods in our dataset. 
+In figure 1 we see the distribution of property worth based on the municipality on one hand, and neighbourhood on the other. They are mostly right skewed. The average worths in Seltjarnarnes ($\mu approx$ 52 m.ISK), Garðabær ($\mu approx$ 49 m.ISK) are the highest. The lowest average worths are in Hafnarfjörður ($\mu approx$ 35 m.ISK) and Reykjavík ($\mu approx$ 35 m.ISK). 
 
+  The distribution for Seltjarnarnes differs from the rest in both graphs; Left graph shows it is multimodal, and the right shows a flatter curve compared to the other neighbourhoods. The property worths in Flatir neighbourhood in Garðabær is the only left-skewed distribution.   
+  
+  The most expensive properties on average are based on neighbourhood are in Flatir ($\mu \approx$ `r round(max[2]/1e3,2)` m.ISK) and the least expensive are outside the urbanized area of Kópavogur ($\mu \approx$ `r round(min[2]/1e3,2)` m.ISK). 
+  
 ```{r, fig.align = 'center'}
 #(3)yearkeypt
 data %>% 
@@ -112,24 +126,24 @@ data %>%
         legend.position = "none", plot.title = element_text(hjust = 0.5)) + 
   ggtitle(" ") + scale_x_continuous(labels = label_number(suffix = " m.ISK"), limits=c(0,100), breaks=seq(0,100,by=20)) + 
   scale_fill_manual(values=ColorsDT$Color) + 
-  labs(y = " ", x = "Property Price") + 
-  ggtitle("Figure 2: Property price by year of sale")
+  labs(y = " ", x = "Property worth") + 
+  ggtitle("Figure 2: Property worth by year of sale")
 ```
 
-In figure 2 we can see the property price by year of sale. Property prices have gradually increased over the years. The average property price over the years 2012 to 2018 is approximately 37 million isk ($\mu \approx$ `r round(mean(data$nuvirdi))`).  
+In figure 2 we can see the property worth by year of sale. Property worths, and their variability, have gradually increased over the years. The average property worth over the years 2012 to 2018 is approximately 37 m.ISK.
 
 ```{r, fig.align = 'center'}
 #(4)fj breytunar
 ff <- function(x){
 data %>%
   group_by(bla = as.factor(x)) %>%
-  summarise(price = round(mean(nuvirdi/1e3))) %>% 
-   mutate(Label=paste0(price), "m.ISK") %>%
-  ggplot(aes(x=price,y=bla, fill=bla)) + 
+  summarise(worth = round(mean(nuvirdi/1e3))) %>% 
+   mutate(Label=paste0(worth), "m.ISK") %>%
+  ggplot(aes(x=worth,y=bla, fill=bla)) + 
     geom_col() +
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), 
           legend.position = "none") +
-    scale_fill_manual(values=sample(ColorsDT$Color)) + geom_text(aes(label=price), nudge_x = -10, col = "white")
+    scale_fill_manual(values=sample(ColorsDT$Color)) + geom_text(aes(label=worth), nudge_x = -10, col = "white")
 }
 p <- scale_x_continuous(labels = label_number(suffix = " m.ISK"), limits=c(0,200))
 q <- scale_x_continuous(labels = label_number(suffix = " m.ISK"), limits=c(0,140), breaks = seq(0,140,by=65))
@@ -139,14 +153,14 @@ grid.arrange(ff(data$fjhaed)+
                labs(y = "Baths", x = " ")+p, ff(data$fjsturt) + 
                labs(y = "Showers", x = " ")+p, ff(data$fjklos) + 
                labs(y = "Toilets", x = " ")+p, ff(data$fjeld) + 
-               labs(y = "Kitchens", x = " ")+p, top= "Figure 3: Mean property price by various elements")
+               labs(y = "Kitchens", x = " ")+p, top= "Figure 3: Mean property worth by various elements")
 grid.arrange(ff(data$fjstof) + 
                labs(y = "Living Rooms", x = " ")+q, ff(data$fjgeym) + 
                labs(y = "Storage Rooms", x = " ")+q, ff(data$fjherb) + 
                labs(y = "Rooms", x = " ")+q, nrow=1)
 ```
 
-In figure 3 we see plots of property price according to various property elements. In general, as elements in a property increase, such as having more baths, showers, toilets and kitchens, the price increases. Although, the price does not appear to increase in the same fashion for number of living rooms, storage rooms and rooms. 
+In figure 3 we see plots of property worth according to various property elements. In general, as elements in a property increase, such as having more baths, showers, toilets and kitchens, the worth increases. Although, the worth does not appear to increase in the same fashion for number of living rooms, storage rooms and rooms.
 
 ```{r, fig.align = 'center'}
 #(5)íbuðir með/án lyftu (bara fjölbýlishús)
@@ -165,13 +179,13 @@ tt <- t(tt)
 data_fjolbylishus %>%
   ggplot() + geom_bar(aes(y=nuvirdi/1e3,x=svfn, fill=lyfta), stat= "identity", position = "dodge") +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank()) + 
-  ggtitle("Figure 4: Mean prices for apartments by municipality and elevator status") + 
+  ggtitle("Figure 4: Mean worths for apartments by municipality and elevator status") + 
   scale_y_continuous(labels = label_number(suffix = " m.ISK"), limits=c(0,45), breaks=seq(0,45,by=10)) + 
   scale_fill_manual(name = "Elevator", values=sample(ColorsDT$Color)) + 
-  labs(x = " ", y = "Apartment Price") + annotate(geom="text", y=20,x="Reykjavik", label= paste("+",tt[1]), col="white")+ annotate(geom="text", y=20,x="Kopavogur", label= paste("+",tt[2]), col="white")+ annotate(geom="text", y=20,x="Seltjarnarnes", label= paste("+",tt[3]), col="white")+ annotate(geom="text", y=20,x="Gardabaer", label= paste("+",tt[4]), col="white")+ annotate(geom="text", y=20,x="Hafnarfjordur", label= paste("+",tt[5]), col="white")+ annotate(geom="text", y=20,x="Mosfellsbaer", label= paste("+",tt[6]), col="white")
+  labs(x = " ", y = "Apartment worth") + annotate(geom="text", y=20,x="Reykjavik", label= paste("+",tt[1]), col="white")+ annotate(geom="text", y=20,x="Kopavogur", label= paste("+",tt[2]), col="white")+ annotate(geom="text", y=20,x="Seltjarnarnes", label= paste("+",tt[3]), col="white")+ annotate(geom="text", y=20,x="Gardabaer", label= paste("+",tt[4]), col="white")+ annotate(geom="text", y=20,x="Hafnarfjordur", label= paste("+",tt[5]), col="white")+ annotate(geom="text", y=20,x="Mosfellsbaer", label= paste("+",tt[6]), col="white")
 ```
 
-In figure 4 we see the average property price of apartments based on whether the building has an elevator or not. Apartments in buildings with an elevator are on average more expensive. The percentages on the plot represent the increase in price for having an elevator in the building. Seltjarnarnes is the only municipality where having an elevator does not increase the propery price.  
+In figure 4 we see average worth of apartments, in each municipality, based on whether the building has an elevator or not. Apartments in buildings with an elevator are on average more expensive. The percentages on the plot represent the increase in worth for having an elevator in the building. Seltjarnarnes is the only municipality where having an elevator does not increase the propery worth.  
 
 ```{r, fig.align = 'right'}
 # verð út frá aldri byggingar og tegund húsnæðis.
@@ -179,24 +193,24 @@ f3 <- data %>%
   mutate(ibteg=ifelse(data$ibteg == 1, "Single-family house", "Apartment building"))
 ggplot(f3, aes(x=nuvirdi/1e3,y=age, group = ibteg, color = ibteg)) +
   geom_smooth() + 
-  ggtitle("Figure 5: Property price based on age and type of property") +
-  labs(x = "Property price", y = "Age of property") + 
+  ggtitle("Figure 5: Property worth based on age and type of property") +
+  labs(x = "Property worth", y = "Age of property") + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), 
         plot.title = element_text(hjust = 0.5)) +
    scale_x_continuous(labels = label_number(suffix = " m.ISK"), limits=c(0,100), breaks=seq(0,100,by=25)) + 
     scale_color_manual(name = "Type of property",values = sample(ColorsDT$Color))
 ```
 
-In figure 5 we have the average property price based on age and type of property. As expected, single-family houses are on average more expensive than apartment buildings and the older the property the more inexpensive it is. Age appears to become irrelevant for single-family houses priced 50 million isk and above.   
+In figure 5 we have the average property worth based on age and type of property. As expected, single-family houses are on average more expensive than apartment buildings and the older the property the more inexpensive it is. Age appears to become irrelevant for single-family houses worthd 50 million isk and above.   
 
 ```{r, fig.align = 'center'}
-# price per square meter by municipality
+# worth per square meter by municipality
 data <- data %>% 
   mutate(fermetraverd = nuvirdi/ibm2)
 ggplot(data, aes(x = fermetraverd, y = svfn, fill = svfn)) +
   geom_density_ridges_gradient() +
-  labs(x= "Price per square meter", y = "Municipality") +
-  ggtitle("Figure 6: Price per square meter by municipality") + 
+  labs(x= "worth per square meter", y = "Municipality") +
+  ggtitle("Figure 6: worth per square meter by municipality") + 
   theme(plot.title = element_text(hjust = 0.5)) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         panel.background = element_blank(), legend.position = "none") + 
@@ -205,7 +219,7 @@ ggplot(data, aes(x = fermetraverd, y = svfn, fill = svfn)) +
   xlim(c(0, 1000))
 ```
 
-In figure 6 we see price per square meter by municipality. We can gather that prices per square meter are a bit higher for properties in Garðabær and Seltjarnarnes (and Mosfellsbær to a degree) than for properties in the other municipalities. 
+In figure 6 we see worth per square meter by municipality. We can gather that worths per square meter are a bit higher for properties in Garðabær and Seltjarnarnes (and Mosfellsbær to a degree) than for properties in the other municipalities. 
 
 ```{r}
 # fjölbýli vs einbýli eftir municipality. Figure 7
@@ -229,18 +243,18 @@ LAGA: Gæti verið gaman að bæta inn municipality hér. Eða bara í hið minn
 da <- data %>%
   dplyr::select(where(is.numeric))
 
-colnames(da) <- c("Pr.Price","Sqm","Floors","Parking","Baths","Showers","Toilets","Kitchens","Rooms","Liv.r.", "Storage","Sale.Year", "Age", "Sqm.Price")
+colnames(da) <- c("Pr.worth","Sqm","Floors","Parking","Baths","Showers","Toilets","Kitchens","Rooms","Liv.r.", "Storage","Sale.Year", "Age", "Sqm.worth")
 par(xpd=TRUE)
 corrplot.mixed(cor(da), lower.col = "#d88121", number.cex=0.7, tl.pos = "lt", upper.col = "#8c5e4a", tl.col="#341e12", tl.cex=0.7, tl.srt = 45, title = "Figure 8: Correlation plot of property elements", mar=c(0,0,4,0))
 ```
 
-A correlation plot of 14 property elements can be seen on figure 8. Price of properties appears to have a moderately strong positive correlation with the size of properties (in square meters), year of sale and number of rooms, living rooms, floors, showers and toilets in a property. 
+A correlation plot of 14 property elements can be seen on figure 8. worth of properties appears to have a moderately strong positive correlation with the size of properties (in square meters), year of sale and number of rooms, living rooms, floors, showers and toilets in a property. 
 
 The last five attributes mentioned here above also appear to have a moderately strong postive relationship with each other. 
 
-## Part II: Predicting sale prices 
+## Part II: Predicting sale worths 
 
-In this part we will predict sale prices using the lasso and boosting. 
+In this part we will predict sale worths using the lasso and boosting. 
 
 ```{r}
 set.seed(4)
@@ -253,7 +267,7 @@ library(factoextra)
 #corrplot(lkj1)
 ```
 
-  Running factor analysis on the data set as a whole obtained 25 dimensions all with eigenvalues higher than one, indicating that the dimension accounts for more variance than one of the original variables. These 25 dimensions only collectively explained around 66% of data variance. The variable for neighbourhood had no correlation to any dimensions so it will be removed for further analysis, addition to price per square meter since it had high correlation to other predictors. 
+  Running factor analysis on the data set as a whole obtained 25 dimensions all with eigenvalues higher than one, indicating that the dimension accounts for more variance than one of the original variables. These 25 dimensions only collectively explained around 66% of data variance. The variable for neighbourhood had no correlation to any dimensions so it will be removed for further analysis, addition to worth per square meter since it had high correlation to other predictors. 
 
 ```{r}
 res.famd <- FAMD(blabb,
@@ -266,7 +280,7 @@ ba <- baa[1:7,]
 ba %>%
   ggplot() + geom_col(aes(x=rownames(ba), y=ba$variance.percent, fill=rownames(ba)))+
   geom_point(aes(x=rownames(ba), y=ba$cumulative.variance.percent, col=rownames(ba))) +
-  labs(x= "Dimensions", y = "Variance of prop. prices explained") +
+  labs(x= "Dimensions", y = "Variance of prop. worths explained") +
   ggtitle("Figure X: Factor Analysis of Mixed Data") + 
   theme(plot.title = element_text(hjust = 0.5)) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
@@ -398,11 +412,11 @@ r2train.lasso <- percent(lasso.mod$dev.ratio)
 
   Figure 9 shows the predictors that Lasso deemed influental regarding property pricing. The bottom seven variables are estimated to result in a decrease in property pricing when their values increase. The remaining variables would have the opposite effect. 
 
-The lasso approach found `r nrow(haha)` important coefficients. The model explained around `r r2train.lasso` of variance ($R^2$) in property price for the training data and around `r r2.lasso` for the test data. With $\lambda$ set to the optimal CV value, training error was around `r lasso.trainmse` m.ISK and test error around `r lassomse.` m.ISK. 
+The lasso approach found `r nrow(haha)` important coefficients. The model explained around `r r2train.lasso` of variance ($R^2$) in property worth for the training data and around `r r2.lasso` for the test data. With $\lambda$ set to the optimal CV value, training error was around `r lasso.trainmse` m.ISK and test error around `r lassomse.` m.ISK. 
 
-  In align with the factor analysis result the regions of the municipality variable do seem to work well as seperate predictors with differing influence regarding property price. Additionally in support of the factor analysis results number of toilets and bathtubs seem to have similar effect on property pricing and might be considered as a singular predictor.
+  In align with the factor analysis result the regions of the municipality variable do seem to work well as seperate predictors with differing influence regarding property worth. Additionally in support of the factor analysis results number of toilets and bathtubs seem to have similar effect on property pricing and might be considered as a singular predictor.
   
-  The main issue with this approach is blindness regarding correlated/confounding variables. As noted earlier (see Figure X.) square meter had the strongest influence on data variance. Here we see that variable is included but rather low, however all the variables from the first dimension of the factor analysis are also included here. Since Lasso is blind to their influence on each other it is important to keep that in mind and not exclude the effect that square meter might have on property price. 
+  The main issue with this approach is blindness regarding correlated/confounding variables. As noted earlier (see Figure X.) square meter had the strongest influence on data variance. Here we see that variable is included but rather low, however all the variables from the first dimension of the factor analysis are also included here. Since Lasso is blind to their influence on each other it is important to keep that in mind and not exclude the effect that square meter might have on property worth. 
   
 ```{r, fig.align = 'center'}
 gaga <- cbind(lasso.pred,y)
@@ -422,11 +436,11 @@ g2 <- gaga %>%
         geom_abline(slope=1,intercept = 0,lty=2, col= "#302016") +
 scale_x_continuous(labels = label_number(suffix = " m.ISK"), limits=c(0,150),breaks = seq(0,150, by=50)) +
   scale_y_continuous(labels = label_number(suffix = " m.ISK"))
-grid.arrange(g2,g1, nrow=1,top="Figure 10: Lasso predicted versus observed property prices", bottom="Predicted", left="Observed")
+grid.arrange(g2,g1, nrow=1,top="Figure 10: Lasso predicted versus observed property worths", bottom="Predicted", left="Observed")
 ```
 
 In Figure 10 we see the relationship between lasso´s predicted values and observed values. The right graph includes all values in the data set and we appear to have an extreme value at the top of the plot. 
-  The left graph is a close-up of all the values excluding the extreme value. The relationship seems stronger for lower priced properties but starts to gradually worsen as the price goes up.
+  The left graph is a close-up of all the values excluding the extreme value. The relationship seems stronger for lower worthd properties but starts to gradually worsen as the worth goes up.
   
 Eigum við að skoða þetta gildi eitthvað nánar?
 
@@ -510,7 +524,7 @@ rmse.boost <- rmse(predictions, test.set$nuvirdi)
 
 LAGA: y-axis á plottinu. OMG, hvernig fer maður að þessu!
 
-As shown in figure 12, there are four variables that have high relative importance. They are square meters of property, the year the property was bought, the number of bathrooms and municipality. Square meters per property is by far the most important variable. In figures 3 and 7 in part I we learned that the more square meters and bathrooms are in a property the more expensive it is. We also learned that property prices increase the younger the property is.
+As shown in figure 12, there are four variables that have high relative importance. They are square meters of property, the year the property was bought, the number of bathrooms and municipality. Square meters per property is by far the most important variable. In figures 3 and 7 in part I we learned that the more square meters and bathrooms are in a property the more expensive it is. We also learned that property worths increase the younger the property is.
 
 ```{r}
 tafla <- data.frame(Boosting <- c(MSE=paste0(round(min.testMSE/1e3,2)," m.ISK"),
