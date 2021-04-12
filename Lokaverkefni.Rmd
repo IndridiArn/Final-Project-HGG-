@@ -639,3 +639,22 @@ old %>%
   kable() %>%
   kable_styling(full_width = F)
 ```
+
+
+#### Bonus
+```{r}
+bonusdataserbyli <- read.csv("bonusdataserbyli.csv")
+bonusdatafjolbyli <- read.csv("bonusdatafjolbyli.csv")
+sam <- names(bonusdatafjolbyli)[names(bonusdatafjolbyli) %in% names(bonusdataserbyli)]
+bonusdataserbyli <- bonusdataserbyli %>%
+  select_if(colnames(bonusdataserbyli) %in% sam)
+bonusdatafjolbyli <- bonusdatafjolbyli %>%
+  select_if(colnames(bonusdatafjolbyli) %in% sam)
+bonus <- rbind(bonusdatafjolbyli,bonusdataserbyli)
+bonus$utgdag <- as.Date(bonus$utgdag, format = "%m/%d/%Y")
+bonus$year <- format(bonus$utgdag, format="%Y")
+bonus$year <- as.numeric(bonus$year)
+bonus <- bonus %>%
+  filter(bonus$year>2018)
+```
+
