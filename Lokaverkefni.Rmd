@@ -468,7 +468,7 @@ In Figure 13 we see the relationship between lasso´s predicted values and obser
 ```{r}
 set.seed(1)
 
-datam <- data %>% select(-matssvaedi)
+datam <- data %>% select(-matssvaedi, - fermetraverd)
 TRAIN <- sample(1:nrow(datam), nrow(datam)*0.7)
 train.set <- datam[TRAIN,]
 test.set <- datam[-TRAIN,]
@@ -490,10 +490,8 @@ Tuning the parameters resulted in a model with 500 boosting iterations (n.trees 
 ```{r fig.align='center'}
 knitr::include_graphics("https://i.imgur.com/1UVpsKy.png")
 ```
-LAGA: Túlkun : TODO ATH 
-In figure 14 we see a plot of the RMSE via cross-validation according to various measures of tree size and shrinkage value. We can see here out of the two options.
+In figure 14 we see a plot of the RMSE via cross-validation according to various measures of tree size and shrinkage value. We can see here that using 500 boosting iterations, with $\lambda$ of 0.1 and a max tree depth of 10 results in the lowest RMSE out of all the tree combinations that were created. 
 
-Now we'll use the training model to predict the worth of a property for the test data and see the test MSE. 
 ```{r}
 library(vip)
 NewBoost.predict <- predict(gbm_tree_final, newdata = test.set)
@@ -505,7 +503,7 @@ vip(gbm_tree_final, aesthetics = list(fill = c("#d48149","#da9566","#ca6e2f","#a
     mapping = aes_string(fill = "Variable")) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(),
         plot.title = element_text(hjust = 0.5)) + 
-  ggtitle("Figure X: Relative influence of variables using boosting") + 
+  ggtitle("Figure 15: Relative influence of variables using boosting") + 
   labs(x = "Influential variables", y = "Relative influence") 
 
 #What is the test MSE
@@ -516,12 +514,14 @@ BOOST.test.MSE <- round(mean((NewBoost.predict - test.set$nuvirdi)^2), 2)
 rmse.boost <- sqrt(BOOST.test.MSE)
 ```
 
-As shown in figure X, there are four variables that have high relative importance. They are square meters of property, the year the property was bought, the age of the property and at last, municipality the property is in. Square meters per property is by far the most important variable. In figures X and X in part I we learned that the more square meters are in a property the more expensive it is. We also learned that property prices increase the younger the property is. 
+LAGA: vantar nöfn á ásana. Mikið vesen. Hvernig best að gera? 
 
-The test set MSE which is `r BOOST.test.MSE`. 
+LAGA: FERMETRAVERÐ á ekki að vera í plottinu!
+
+As shown in figure 15, there are four variables that have high relative importance. They are square meters of property, the year the property was bought, the age of the property and at last, municipality the property is in. Square meters per property is by far the most important variable. In figures X and X in part I we learned that the more square meters are in a property the more expensive it is. We also learned that property prices increase the younger the property is. 
 
 
-LAGA ÞESSA TÖFLU. BERGRÓS, gætir þú tékkað á hvort hún sé rétt? 
+LAGA. BERGRÓS, gætir þú tékkað á hvort hún sé rétt? Erum að fá þvílíkt lág gildi með Boosting m.v. Lasso. 
 ```{r}
 tafla <- data.frame(Boosting <- c(MSE=paste0(round(BOOST.test.MSE/1e6,2)," m.ISK"),
           RMSE=paste0(round(rmse.boost/1e3,2)," m.ISK"),
@@ -539,7 +539,7 @@ In table 1 we can see the results from both the lasso approach and boosting. The
 
 ## Part II
 
-Here we will predict whether a property is old or new. We've created a new binary variable: If the property age exceeds the overall median age (32 years) it is categorised as an old property, the remaining as a new. 
+Here we will predict whether a property is old or new. We've created a new binary variable: If the property age exceeds the overall median age (32 years) it is categorised as an old property, and the remaining as new properties. 
 
 We will use quadratic discriminant analysis (QDA), logistic regression and random forest to predict whether a property is old or new.
 
