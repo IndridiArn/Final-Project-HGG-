@@ -48,8 +48,9 @@ The dataset contains many variables, some of which have been excluded from analy
 
 ## Reading data and cleanup
 ```{r}
-data <- read_delim("https://www.skra.is/library/Samnyttar-skrar-/Fyrirtaeki-stofnanir/Fasteignamat-2019/gagnasafn_ib_2018.csv", ";", escape_double = FALSE, locale = locale(encoding = "ISO-8859-1"),
-                                     trim_ws = TRUE)
+data <- read_delim("https://www.skra.is/library/Samnyttar-skrar-/Fyrirtaeki-stofnanir/Fasteignamat-2019/gagnasafn_ib_2018.csv", ";", escape_double = FALSE, locale = locale(decimal_mark = ",", 
+        grouping_mark = ".", encoding = "ISO-8859-1"), 
+    trim_ws = TRUE)
 data <- data %>% select(kdagur, nuvirdi, byggar, lyfta, ibm2, fjhaed, fjbilsk, fjbkar, fjsturt, fjklos, fjeld, fjherb, fjstof, fjgeym, matssvaedi, ibteg, svfn) %>%
   filter(matssvaedi < 1000) %>%
   mutate(lyfta = ifelse(lyfta >= 1, 1, 0)) %>%
@@ -200,8 +201,8 @@ ggplot(data, aes(x = fermetraverd, y = svfn, fill = svfn)) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         panel.background = element_blank(), legend.position = "none") + 
   scale_fill_manual(values = sample(ColorsDT$Color)) + 
-  scale_color_manual(name = "Type of property",values=sample(ColorsDT$Color)) +
-  xlim(c(0, 75))
+  scale_color_manual(name = "Type of property",values=sample(ColorsDT$Color)) + 
+  xlim(c(0, 1000))
 ```
 
 In figure 6 we see price per square meter by municipality. We can gather that prices per square meter are a bit higher for properties in Garðabær and Seltjarnarnes (and Mosfellsbær to a degree) than for properties in the other municipalities. 
@@ -224,6 +225,70 @@ The last five attributes mentioned here above also appear to have a moderately s
 
 In this part we will predict sale prices using the lasso and boosting. 
 
+```{r}
+library(FactoMineR)
+library(factoextra)
+blabb <- data %>% select(-matssvaedi, -fermetraverd)
+res.famd <- FAMD(blabb,
+                 sup.var=blabb$nuvirdi,
+                 graph=F,
+                 ncp=7)
+ba <- data.frame(get_eigenvalue(res.famd))
+rownames(ba) = c(1:7)
+ba %>%
+  ggplot() + geom_col(aes(x=rownames(ba), y=ba$variance.percent, fill=rownames(ba)))+
+  geom_point(aes(x=rownames(ba), y=ba$cumulative.variance.percent, col=rownames(ba))) +
+  labs(x= "Dimensions", y = "Variance of prop. prices explained") +
+  ggtitle("Figure X: Factor Analysis of Mixed Data") + 
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        panel.background = element_blank(), legend.position = "none") + 
+  scale_fill_manual(values = sample(ColorsDT$Color)) + 
+  scale_color_manual(values=sample(ColorsDT$Color)) + 
+  scale_y_continuous(labels = label_number(suffix = "%"), limits=c(0,75)) + 
+  annotate(geom="text", y=3,x="1", 
+           label= paste(round(ba$variance.percent[1]),"%"), col="white") +
+  annotate(geom="text", y=3,x="2", 
+           label= paste(round(ba$variance.percent[2]),"%"), col="white") + 
+  annotate(geom="text", y=3,x="3", 
+           label= paste(round(ba$variance.percent[3]),"%"), col="white") +
+  annotate(geom="text", y=3,x="4", 
+           label= paste(round(ba$variance.percent[4]),"%"), col="white") + 
+  annotate(geom="text", y=3,x="5", 
+           label= paste(round(ba$variance.percent[5]),"%"), col="white") + 
+  annotate(geom="text", y=3,x="6", 
+           label= paste(round(ba$variance.percent[6]),"%"), col="white") +
+  annotate(geom="text", y=3,x="7", 
+           label= paste(round(ba$variance.percent[7]),"%"), col="white") + 
+  annotate(geom="text", y=26,x="1", 
+           label= paste(round(ba$cumulative.variance.percent[1]),"%"), col="#a36e56") +
+  annotate(geom="text", y=38,x="2", 
+           label= paste(round(ba$cumulative.variance.percent[2]),"%"), col="#a36e56") + 
+  annotate(geom="text", y=45,x="3", 
+           label= paste(round(ba$cumulative.variance.percent[3]),"%"), col="#a36e56") +
+  annotate(geom="text", y=51,x="4", 
+           label= paste(round(ba$cumulative.variance.percent[4]),"%"), col="#a36e56") + 
+  annotate(geom="text", y=56,x="5", 
+           label= paste(round(ba$cumulative.variance.percent[5]),"%"), col="#a36e56") + 
+  annotate(geom="text", y=62,x="6", 
+           label= paste(round(ba$cumulative.variance.percent[6]),"%"), col="#a36e56") +
+  annotate(geom="text", y=67,x="7", 
+           label= paste(round(ba$cumulative.variance.percent[7]),"%"), col="#a36e56")
+
+gaga <- data.frame(get_famd_var(res.famd)$contrib)
+
+
+ba <- fviz_contrib(res.famd, choice="var", top=10, axes=1:7) + ggtitle("Variable contribution")
+ba1 <- fviz_cos2(res.famd, choice="var", axes=1:7) + ggtitle("Quality of representation")
+grid.arrange(ba,ba1)
+ga2 <- fviz_famd_var(res.famd, "var", col.var="#a36e56")
+ga3 <- fviz_famd_var(res.famd, "quanti.var", col.var = "#8c5e4a", repel=T)
+grid.arrange(ga3,ga2, nrow=1)
+lkj <- get_famd_var(res.famd)$cos2
+corrplot(lkj)
+```
+
+
 #### The lasso
 
 ```{r, fig.align = 'center'}
@@ -239,7 +304,7 @@ lasso.cv <- cv.glmnet(x[train,],
                       alpha=1,
                       lambda = grid)
 bestlam <- lasso.cv$lambda.min
-bestmse <- lasso.cv$cvm[lasso.cv$lambda.min]
+bestmse <- min(lasso.cv$cvm)
 data.frame(lambda = lasso.cv$lambda, 
            cv.mse = lasso.cv$cvm, 
            nonzero = lasso.cv$nzero) %>%
@@ -255,13 +320,10 @@ data.frame(lambda = lasso.cv$lambda,
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         panel.background = element_blank(), legend.position = "none", plot.title = element_text(hjust = 0.5)) + 
   ggtitle("Figure 8: Lasso Cross-Validation") + 
-  annotate(geom="text",y=10^8.1438, x=10^-0.5, label= expression(paste(lambda, "=0.36")))
-
-
-
+  annotate(geom="text",y=10^(0.03+log10(bestmse)), x=10^log10(bestlam), label= expression(paste(lambda, "=0.36")))
 ```
 
-In figure 8 we can see the test MSE for different lambda values via cross-validation. Our optimal value of $\lambda$ is log10(`r round(bestlam,2)`), for minimum test MSE. 
+In figure 8 we can see the test MSE for different lambda values via cross-validation. Our optimal value of $\lambda$ is `r round(bestlam,2)`, for minimum test MSE. 
 
 ```{r, fig.align = 'center'}
 library(reshape2)
@@ -280,13 +342,13 @@ plot$lambda <- lasso.mod$lambda[plot$variable+1]
 haha <- plot[-1,] %>%
   filter(value>0) %>%
   arrange(-value)
-rownames(haha) <- c("Seltjarnarnes", "Prop. Type", "Toilets", "Kitchens", "Garðabær", "Parking", "Hafnarfjörður","Living rooms", "Showers","Sales Year", "Rooms", "Bathtubs", "Floors", "Elevator")
+#rownames(haha) <- c("Seltjarnarnes", "Prop. Type", "Toilets", "Kitchens", "Garðabær", "Parking", "Hafnarfjörður","Living rooms", "Showers","Sales Year", "Rooms", "Bathtubs", "Floors", "Elevator")
 haha %>%
-  ggplot(aes(value,reorder(rownames(haha),value), col=coef)) + geom_point(show.legend = F, size = 3)+ 
+  ggplot(aes(value,reorder(coef,value), col=coef)) + geom_point(show.legend = F, size = 3)+ 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         panel.background = element_blank(), legend.position = "none") + 
   scale_fill_manual(values = sample(ColorsDT$Color)) + 
-  scale_color_manual(name = "Type of property",values=sample(ColorsDT$Color)) + labs(x="Coefficient", y=" ") + ggtitle(expression(paste("Figure 9: Predictors with non-zero Lasso coefficients with ", lambda, " = 10")))
+  scale_color_manual(name = "Type of property",values=sample(ColorsDT$Color)) + labs(x="Coefficient", y=" ") + ggtitle(expression(paste("Figure 9: Predictors with non-zero Lasso coefficients with ", lambda, " = 0.36")))
 
 test <- blabb[-train,]
 lasso.pred <- predict(lasso.mod, s=bestlam, newx=x[train,])
@@ -299,9 +361,7 @@ r2.lasso <- percent(1-mean((lasso.pred.[,1]-test$nuvirdi)^2)/mean((mean(test$nuv
 r2train.lasso <- percent(lasso.mod$dev.ratio)
 ```
 
-The lasso approach found `r nrow(haha)` important coefficients. The model explained around `r r2train.lasso` of variance ($R^2$) in property price for the training data and around `r r2.lasso` for the test data. With $\lambda$ set to log(10) training error was around `r lasso.trainmse` m.ISK and test error around `r lassomse.` m.ISK. 
-
-Þarf að laga þennan texta? 
+The lasso approach found `r nrow(haha)` important coefficients. The model explained around `r r2train.lasso` of variance ($R^2$) in property price for the training data and around `r r2.lasso` for the test data. With $\lambda$ set to the optimal CV value, training error was around `r lasso.trainmse` m.ISK and test error around `r lassomse.` m.ISK. 
 
 The main issue with this approach is blindness regarding correlated/confounding variables.  
   
@@ -328,6 +388,8 @@ grid.arrange(g2,g1, nrow=1,top="Figure 10: Lasso predicted versus observed prope
 
 In Figure 10 we see the relationship between lasso´s predicted values and observed values. The right graph includes all values in the data set and we appear to have an extreme value at the top of the plot. 
   The left graph is a close-up of all the values excluding the extreme value. The relationship seems stronger for lower priced properties but starts to gradually worsen as the price goes up.
+  
+Eigum við að skoða þetta gildi eitthvað nánar?
 
 #### Boosting
 
@@ -350,12 +412,12 @@ for (i in 1:length(lambdas)) {
    test.MSE[i] <- round(mean((boost.predict - test.set$nuvirdi)^2), 2)
 }
 min.testMSE <- min(test.MSE) # gives the lowest test MSE
-min.lambda. <- lambdas[which.min(test.MSE)] # gives the lambda corresponding to lowest test
-min.lambda <- round(min.lambda.,2)
+min.lambda. <- lambdas[which.min(test.MSE)]
+min.lambda <- round(min.lambda.,2)# gives the lambda corresponding to lowest test
 data.frame(mse=test.MSE, 
            lambda=lambdas) %>%
   ggplot(aes(x=lambda,y=test.MSE,
-             col= ifelse(lambda==min.lambda., "#493021","#d88121"))) +
+             col= ifelse(round(lambda,2)==min.lambda, "#493021","#d88121"))) +
   geom_point(size=3) + 
   geom_line() +
   scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
@@ -368,12 +430,10 @@ data.frame(mse=test.MSE,
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         panel.background = element_blank(), legend.position = "none", plot.title = element_text(hjust = 0.5)) + 
   ggtitle("Figure 11: Test MSE for a range of lambda values") + 
-  annotate(geom="text",y=10^25, x=10^-0.1, label= expression(paste(lambda, "= 0.7")))
-
-LOGmin.testMSE <- log10(min(test.MSE)) 
+  annotate(geom="text",y=10^(10+log10(min.testMSE)), x=10^log10(min.lambda), label= expression(paste(lambda, "= 1.44")))
 ```
 
-In figure 11 we have computed the test error as a function of the shrinkage value. Our optimal $\lambda$ is `r min.lambda` for the minimum test MSE. With lambda set to log(10) the test MSE is `r round(LOGmin.testMSE, 2)` m.isk. 
+In figure 11 we have computed the test error as a function of the shrinkage value. Our optimal $\lambda$ is `r min.lambda` for the minimum test MSE. With the CV lambda the test MSE is `r round(min.testMSE, 2)` m.isk. 
 
 Bæta hér inn tuning parameter fyrir n.trees?
 ```{r}
@@ -386,11 +446,12 @@ Bæta hér inn tuning parameter fyrir mtry?
 ```
 
 MUNA = BREYTA n.trees í hærri tölu! 
+
 ```{r, fig.align = 'center'}
 set.seed(1)
 boost <- gbm(nuvirdi ~ ., data = train.set,
              distribution = "gaussian",
-             shrinkage = 0.7, # common lambda to use (0.01 or 0.001). BREYTA í BEST LAMBDA
+             shrinkage = min.lambda., # common lambda to use (0.01 or 0.001). BREYTA í BEST LAMBDA
              n.trees = 100)
 library(vip)
 vip(boost, aesthetics = list(fill = c("#d48149","#da9566","#ca6e2f","#ad5e28","#e1a983","#e8bda0","#2e1f18",
@@ -399,7 +460,7 @@ vip(boost, aesthetics = list(fill = c("#d48149","#da9566","#ca6e2f","#ad5e28","#
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(),
         plot.title = element_text(hjust = 0.5)) + 
   ggtitle("Figure 12: Relative influence of variables using boosting") + 
-  labs(x = "Property Price", y = "Relative influence") 
+  labs(x = "Influential variables", y = "Relative influence") 
   
  
 # Reiknað út RMSE 
@@ -413,7 +474,7 @@ LAGA: y-axis á plottinu. OMG, hvernig fer maður að þessu!
 As shown in figure 12, there are four variables that have high relative importance. They are square meters of property, the year the property was bought, the number of bathrooms and municipality. Square meters per property is by far the most important variable. In figures 3 and 7 in part I we learned that the more square meters and bathrooms are in a property the more expensive it is. We also learned that property prices increase the younger the property is.
 
 ```{r}
-tafla <- data.frame(Boosting <- c(MSE=paste0(round(min.testMSE/1e6,2)," m.ISK"),
+tafla <- data.frame(Boosting <- c(MSE=paste0(round(min.testMSE/1e3,2)," m.ISK"),
           RMSE=paste0(round(rmse.boost/1e3,2)," m.ISK"),
           Variables="10"),
           Lasso <- c(MSE=paste0(lassomse.," m.ISK"),
@@ -510,91 +571,3 @@ old %>%
   kable() %>%
   kable_styling(full_width = F)
 ```
-
-#### Classification trees and Random forests
-
-
-TODO túlka og mögulega finna betri plot pakka.
-
-
-```{r}
-tree.data2 <- tree(AgeNew~.,data=train.set2)
-plot(tree.data2)
-text(tree.data2,pretty=0)
-tree.pred <- predict(tree.data2,newdata=test.set2, type="class")
-#TEST MSE 
-#tree.test.MSE <- mean((tree.pred-test.set2$AgeNew)**2)
-pred.table <- table(tree.pred,test.set2$AgeNew)
-tree.testMSE <- round(1-mean(tree.pred == test.set2$AgeNew),2)
-testMSEperc <- percent(tree.testMSE)
-```
-
-`r testMSEperc` 
-
-TODO: Bæta við texta hér. 
-
-```{r}
-tree.data2.cv <- cv.tree(tree.data2)
-plot(tree.data2.cv$size,tree.data2.cv$dev,type="b")
-prune.tree.data2 <- prune.tree(tree.data2,best=7) 
-plot(prune.tree.data2)
-text(prune.tree.data2,pretty=0)
-pruned.tree.pred <- predict(prune.tree.data2,newdata=test.set2, type="class")
-#pruned.tree.test.MSE <- mean((pruned.tree.pred-test.set2$AgeNew)**2)
-pruned.tree.testMSE <- round(1-mean(pruned.tree.pred == test.set2$AgeNew),2)
-testMSEperc <- percent(pruned.tree.testMSE)
-```
-
-`r testMSEperc`
-TODO útskýra frekar. 
-We get the same test MSE from the pruned tree. 
-TODO: Spurning hvort við viljum vera með öll þessi plot?
-
-
-
-Finding out the optimal mtry value for random forrest 
-```{r}
-randforr_MSE <- rep(NA,ncol(train.set2)-1)
-#þessi skipun tekur um 10 min að keyra í minni tölvu. 
-for (i in 1:(ncol(train.set2)-1)) {
-  randforr_cs <- randomForest(AgeNew~.,data=train.set2,mtry=i,importance=T)
-  pred_randforr <- predict(randforr_cs,newdata = test.set2)
-  randforr_MSE[i] <- mean((pred_randforr==test.set2$AgeNew))
-  #print("Höfum keyr í gegn")
-  #print(i)
-  #print("sinnum")
-  
-}
-randforr_MSE
-min.cv <- (1-which.max(randforr_MSE))
-best.CV <- which.max(randforr_MSE)
-plot(randforr_MSE, type = "b",xlab = "Degree", ylab = "Test MSE", main="Test MSE by number of variables")
-points(best.CV, randforr_MSE[best.CV], col = "darkred",pch = 10,cex =12)
-```
-
-
-
-
-Using random Forest with the optimal mtry variable which is `r best.cv`
-```{r}
-#library(rpart)
-library(visreg)
-randforr_best <- randomForest(AgeNew~.,data=train.set2,mtry=best.CV,importance=T,ntree=10) #TODO skoða að breyta Ntree og mögulega mtry, því fleiri sem ntree eru því lengri tíma tekur að keyra. 
-pred_randforr <- predict(randforr_best,newdata = test.set2)
-randforr_MSE <- round(1-mean((pred_randforr==test.set2$AgeNew)),2)
-plot(randforr_best) # TODO breyta þessu plotti, ég hélt að þetta myndi ekki virka en viti menn.
-#text(randforr_best,pretty=0)
-  
-  
-varImpPlot(randforr_best)
-randforr_MSE.perc <- percent(randforr_MSE)
-#visreg(randforr_best)     Er að leita að betri pakka til að plotta. 
-#autoplot(randforr_best)
-```
-`r randforr_MSE.perc`
-
-
-TODO : muna að breyta randomForest í forlykkjur þar sem mtry = (1:ncol(train.set2)) og hafa ntree ekki of mikið. 
-
-Using the Random forest yields a much better test MSE than the regression tree method. 
-TODO útskýra betur og bera saman við niðurstöðurnar frá QDA og LDA.
