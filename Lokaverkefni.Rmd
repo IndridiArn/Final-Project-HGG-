@@ -485,11 +485,11 @@ gbm_tree_final <- train(nuvirdi ~ ., data = train.set,
 We ran cross-validation on multiple combinations of trees. 
 Tuning the parameters resulted in a model with 500 boosting iterations (n.trees = 500), a max tree depth of ten (interaction depth = 10), and a $lambda$ of 0.1. The minimum terminal node size was kept constant at 10. 
 
-PLOT IDDA HÉR
-```{r}
-
+```{r fig.align='center'}
+knitr::include_graphics("https://i.imgur.com/1UVpsKy.png")
 ```
-In figure X we see a plot of the cross-validation according to measures of tree size and shrinkage value. We can see here out of the two options.....
+LAGA: Túlkun : TODO ATH 
+In figure 14 we see a plot of the cross-validation according to measures of tree size and shrinkage value. We can see here out of the two options.....
 
 Now we'll use the training model to predict the worth of a property for the test data and see the test MSE. 
 ```{r}
