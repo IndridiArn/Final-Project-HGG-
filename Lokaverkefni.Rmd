@@ -516,12 +516,10 @@ rmse.boost <- sqrt(BOOST.test.MSE)
 
 LAGA: vantar nöfn á ásana. Mikið vesen. Hvernig best að gera? 
 
-LAGA: FERMETRAVERÐ á ekki að vera í plottinu!
-
-As shown in figure 15, there are four variables that have high relative importance. They are square meters of property, the year the property was bought, the age of the property and at last, municipality the property is in. Square meters per property is by far the most important variable. In figures X and X in part I we learned that the more square meters are in a property the more expensive it is. We also learned that property prices increase the younger the property is. 
+As shown in figure 15, there are three variables that have higher relative importance. They are square meters of property, the year the property was bought and the age of the property. Square meters per property is by far the most important variable. In figures 5 and 8 in the exploratory analysis we learned that the more square meters are in a property the more it is worth and that property worth increases the younger the property is. 
 
 
-LAGA. BERGRÓS, gætir þú tékkað á hvort hún sé rétt? Erum að fá þvílíkt lág gildi með Boosting m.v. Lasso. 
+LAGA. BERGRÓS, ég bjó til nýja töflu fyrir neðan þessa. Hún meikar mjög mikið sense. 
 ```{r}
 tafla <- data.frame(Boosting <- c(MSE=paste0(round(BOOST.test.MSE/1e6,2)," m.ISK"),
           RMSE=paste0(round(rmse.boost/1e3,2)," m.ISK"),
@@ -534,7 +532,30 @@ t(tafla) %>%
   kable(align="c", caption = "Table 1: Comparison of boosting and the lasso") %>%
   kable_styling(full_width = F)
 ```
-In table 1 we can see the results from both the lasso approach and boosting. The lasso leads to a lower test MSE meanwhile boosting leads to a lower RMSE. 
+
+NÝ TAFLA með lasso og boosting þar sem mse og rmse er kóðað alveg eins. Bjó til nýjar breytur. 
+
+```{r}
+library(Metrics)
+
+lasso.testMSE <- log10(round((mean(lasso.pred.[,1])^2),2))
+lasso.RMSE <- log10(round(sqrt(lasso.testMSE), 2))
+
+tafla <- data.frame(Boosting <- c(MSE=paste0(round(BOOST.test.MSE, 2)),
+          RMSE=paste0(round(rmse.boost, 2)),
+          Variables="10"),
+          Lasso <- c(MSE=paste0(round(lasso.testMSE, 2)),
+           RMSE=paste0(round(lasso.RMSE, 2)),
+           Variables=nrow(haha)))
+colnames(tafla) <- c("Boosting","Lasso")
+t(tafla) %>%
+  kable(align="c", caption = "Table 1: Comparison of boosting and the lasso (log10)") %>%
+  kable_styling(full_width = F)
+```
+
+LAGA: fjölda variables í töflunni! 
+
+In table 1 we can see the results from both the lasso approach and boosting. The MSE and RMSE for boosting is lower than it is for 
 
 
 ## Part II
