@@ -226,15 +226,26 @@ The last five attributes mentioned here above also appear to have a moderately s
 In this part we will predict sale prices using the lasso and boosting. 
 
 ```{r}
+set.seed(4)
+blabb <- data %>% select(-matssvaedi, -fermetraverd)
 library(FactoMineR)
 library(factoextra)
-blabb <- data %>% select(-matssvaedi, -fermetraverd)
+#res.famd1 <- FAMD(data, sup.var=data$nuvirdi, graph=F, ncp=10)
+#lkj1 <- get_famd_var(res.famd1)$cos2
+#round(lkj1,2)
+#corrplot(lkj1)
+```
+
+  Running factor analysis on the data set as a whole obtained 25 dimensions all with eigenvalues higher than one, indicating that the dimension accounts for more variance than one of the original variables. These 25 dimensions only collectively explained around 66% of data variance. The variable for neighbourhood had no correlation to any dimensions so it will be removed for further analysis, addition to price per square meter since it had high correlation to other predictors. 
+
+```{r}
 res.famd <- FAMD(blabb,
                  sup.var=blabb$nuvirdi,
                  graph=F,
-                 ncp=7)
-ba <- data.frame(get_eigenvalue(res.famd))
-rownames(ba) = c(1:7)
+                 ncp=10)
+baa <- data.frame(get_eigenvalue(res.famd))
+rownames(baa) = c(1:10)
+ba <- baa[1:7,] 
 ba %>%
   ggplot() + geom_col(aes(x=rownames(ba), y=ba$variance.percent, fill=rownames(ba)))+
   geom_point(aes(x=rownames(ba), y=ba$cumulative.variance.percent, col=rownames(ba))) +
@@ -245,7 +256,7 @@ ba %>%
         panel.background = element_blank(), legend.position = "none") + 
   scale_fill_manual(values = sample(ColorsDT$Color)) + 
   scale_color_manual(values=sample(ColorsDT$Color)) + 
-  scale_y_continuous(labels = label_number(suffix = "%"), limits=c(0,75)) + 
+  scale_y_continuous(labels = label_number(suffix = "%"), limits=c(0,80))  + 
   annotate(geom="text", y=3,x="1", 
            label= paste(round(ba$variance.percent[1]),"%"), col="white") +
   annotate(geom="text", y=3,x="2", 
@@ -260,7 +271,7 @@ ba %>%
            label= paste(round(ba$variance.percent[6]),"%"), col="white") +
   annotate(geom="text", y=3,x="7", 
            label= paste(round(ba$variance.percent[7]),"%"), col="white") + 
-  annotate(geom="text", y=26,x="1", 
+  annotate(geom="text", y=25,x="1", 
            label= paste(round(ba$cumulative.variance.percent[1]),"%"), col="#a36e56") +
   annotate(geom="text", y=38,x="2", 
            label= paste(round(ba$cumulative.variance.percent[2]),"%"), col="#a36e56") + 
@@ -273,27 +284,29 @@ ba %>%
   annotate(geom="text", y=62,x="6", 
            label= paste(round(ba$cumulative.variance.percent[6]),"%"), col="#a36e56") +
   annotate(geom="text", y=67,x="7", 
-           label= paste(round(ba$cumulative.variance.percent[7]),"%"), col="#a36e56")
+           label= paste(round(ba$cumulative.variance.percent[7]),"%"), col="#a36e56") 
+```
 
-gaga <- data.frame(get_famd_var(res.famd)$contrib)
+  Removing the two variables reduced the influential dimensions from 25 to seven and only decreased the cumulative variance explained by around 2%. 
 
+```{r}
+fviz_contrib(res.famd, choice="var", axes=1:7) + ggtitle("Figure X: Variable contribution")
+```
 
-ba <- fviz_contrib(res.famd, choice="var", top=10, axes=1:7) + ggtitle("Variable contribution")
-ba1 <- fviz_cos2(res.famd, choice="var", axes=1:7) + ggtitle("Quality of representation")
-grid.arrange(ba,ba1)
-ga2 <- fviz_famd_var(res.famd, "var", col.var="#a36e56")
-ga3 <- fviz_famd_var(res.famd, "quanti.var", col.var = "#8c5e4a", repel=T)
-grid.arrange(ga3,ga2, nrow=1)
+  Here we can see visually how influential the variables are to the data set as a whole. Clearly municipality causes the most variablity compared to the other variables.
+
+```{r}
 lkj <- get_famd_var(res.famd)$cos2
 corrplot(lkj)
 ```
 
+  Here we can see how the variables influence each dimension. This suggests splitting municipality, which aligns with the previous graph. Additionally it seems like the number of shower and bath a property has might work together, perhaps as number of master bathrooms. Sales Year seems like a strong variable on it's own. 
+  
+  Only the first seven dimensions had eigenvalues above one. Therefore we might assume that splitting municipality would only make two of it's regions strong predictors. Lastly all the variables included in the first dimension, except for property pricing and property type, might work as a unit as property size.
 
 #### The lasso
 
 ```{r, fig.align = 'center'}
-set.seed(4)
-blabb <- data %>% select(-matssvaedi, -fermetraverd)
 x <- model.matrix(nuvirdi~., blabb)[,-1]
 grid <- 10^seq(4,-1, length.out = 10)
 train <- sample(1:nrow(x),nrow(x)*0.7)
@@ -339,17 +352,21 @@ plot$coef <- row.names(plot)
 plot <- reshape2::melt(plot, id="coef")
 plot$variable <- as.numeric(gsub("s","",plot$variable))
 plot$lambda <- lasso.mod$lambda[plot$variable+1]
+ha <- plot[sapply(plot$value, FUN = function(x) all(x >= 0)),]
+ha2 <- plot[sapply(plot$value, FUN = function(x) all(x < 0)),]
+
 haha <- plot[-1,] %>%
-  mutate(value = abs(value)) %>% 
-  filter(value>0) %>%
-  arrange(-value)
+  mutate(Value = abs(value)) %>% 
+  filter(Value>0) %>%
+  arrange(-Value)
 rownames(haha) <- c("Seltjarnarnes", "Hafnarfjörður", "Garage", "Floor", "Year Bought", "Property type", "Garðabær","Bathrooms", "Mosfellsbær", "Showers", "Elevator", "Kitchens","Bathtubs","Rooms","Living rooms","Kópavogur","Storage rooms","Size","Age") #keyra coef(lasso.mod) til að sjá hvaða rownames eiga að vera hér
 haha %>%
-  ggplot(aes(value,reorder(coef,value), col=coef)) + geom_point(show.legend = F, size = 3)+ 
+  ggplot(aes(value,reorder(coef,value),
+             col = ifelse(value>=0, "#a36e56","#493021"))) + 
+  geom_point(show.legend = F, size = 3)+ 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        panel.background = element_blank(), legend.position = "none") + 
-  scale_fill_manual(values = sample(ColorsDT$Color)) + 
-  scale_color_manual(name = "Type of property",values=sample(ColorsDT$Color)) + labs(x="Coefficient", y=" ") + ggtitle(expression(paste("Figure 9: Predictors with non-zero Lasso coefficients with ", lambda, " = 0.36")))
+        panel.background = element_blank()) + 
+  scale_color_manual(values=sample(ColorsDT$Color)) + labs(x="Coefficient", y=" ") + ggtitle(expression(paste("Figure 9: Predictors with non-zero Lasso coefficients with ", lambda, " = 0.36")))
 
 test <- blabb[-train,]
 lasso.pred <- predict(lasso.mod, s=bestlam, newx=x[train,])
@@ -362,9 +379,13 @@ r2.lasso <- percent(1-mean((lasso.pred.[,1]-test$nuvirdi)^2)/mean((mean(test$nuv
 r2train.lasso <- percent(lasso.mod$dev.ratio)
 ```
 
+  Figure 9 shows the predictors that Lasso deemed influental regarding property pricing. The bottom seven variables are estimated to result in a decrease in property pricing when their values increase. The remaining variables would have the opposite effect. 
+
 The lasso approach found `r nrow(haha)` important coefficients. The model explained around `r r2train.lasso` of variance ($R^2$) in property price for the training data and around `r r2.lasso` for the test data. With $\lambda$ set to the optimal CV value, training error was around `r lasso.trainmse` m.ISK and test error around `r lassomse.` m.ISK. 
 
-The main issue with this approach is blindness regarding correlated/confounding variables.  
+  In align with the factor analysis result the regions of the municipality variable do seem to work well as seperate predictors with differing influence regarding property price. Additionally in support of the factor analysis results number of toilets and bathtubs seem to have similar effect on property pricing and might be considered as a singular predictor.
+  
+  The main issue with this approach is blindness regarding correlated/confounding variables. As noted earlier (see Figure X.) square meter had the strongest influence on data variance. Here we see that variable is included but rather low, however all the variables from the first dimension of the factor analysis are also included here. Since Lasso is blind to their influence on each other it is important to keep that in mind and not exclude the effect that square meter might have on property price. 
   
 ```{r, fig.align = 'center'}
 gaga <- cbind(lasso.pred,y)
