@@ -208,16 +208,33 @@ ggplot(data, aes(x = fermetraverd, y = svfn, fill = svfn)) +
 In figure 6 we see price per square meter by municipality. We can gather that prices per square meter are a bit higher for properties in Garðabær and Seltjarnarnes (and Mosfellsbær to a degree) than for properties in the other municipalities. 
 
 ```{r}
+# fjölbýli vs einbýli eftir municipality. Figure 7
+data7 <- data %>% 
+  mutate(ibteg = ifelse(data$ibteg == 1, "Single-family house", "Apartment building"))
+
+data7 %>% 
+  ggplot(aes(x = ibteg, fill = ibteg)) + 
+  geom_bar(stat= "count", position = "dodge") +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        panel.background = element_blank()) + 
+  ggtitle("Figure 7: Property type by municipality") +
+  scale_fill_manual(name = "Property type", values=sample(ColorsDT$Color)) + 
+  labs(x = " ", y = "Total") + 
+  ylim(0, 30000) 
+```
+LAGA: Gæti verið gaman að bæta inn municipality hér. Eða bara í hið minnsta bæta inn % hlutfallið af fjölb. og einbýlishúsum á bar-in. 
+
+```{r}
 #Corrplot allar numeric breytur
 da <- data %>%
   dplyr::select(where(is.numeric))
 
 colnames(da) <- c("Pr.Price","Sqm","Floors","Parking","Baths","Showers","Toilets","Kitchens","Rooms","Liv.r.", "Storage","Sale.Year", "Age", "Sqm.Price")
 par(xpd=TRUE)
-corrplot.mixed(cor(da), lower.col = "#d88121", number.cex=0.7, tl.pos = "lt", upper.col = "#8c5e4a", tl.col="#341e12", tl.cex=0.7, tl.srt = 45, title = "Figure 7: Correlation plot of property elements", mar=c(0,0,4,0))
+corrplot.mixed(cor(da), lower.col = "#d88121", number.cex=0.7, tl.pos = "lt", upper.col = "#8c5e4a", tl.col="#341e12", tl.cex=0.7, tl.srt = 45, title = "Figure 8: Correlation plot of property elements", mar=c(0,0,4,0))
 ```
 
-A correlation plot of 14 property elements can be seen on figure 7. Price of properties appears to have a moderately strong positive correlation with the size of properties (in square meters), year of sale and number of rooms, living rooms, floors, showers and toilets in a property. 
+A correlation plot of 14 property elements can be seen on figure 8. Price of properties appears to have a moderately strong positive correlation with the size of properties (in square meters), year of sale and number of rooms, living rooms, floors, showers and toilets in a property. 
 
 The last five attributes mentioned here above also appear to have a moderately strong postive relationship with each other. 
 
