@@ -231,7 +231,7 @@ da <- data %>%
 
 colnames(da) <- c("Pr.Price","Sqm","Floors","Parking","Baths","Showers","Toilets","Kitchens","Rooms","Liv.r.", "Storage","Sale.Year", "Age", "Sqm.Price")
 par(xpd=TRUE)
-corrplot.mixed(cor(da), lower.col = "#d88121", number.cex=0.7, tl.pos = "lt", upper.col = "#8c5e4a", tl.col="#341e12", tl.cex=0.7, tl.srt = 45, title = "Figure 7: Correlation plot of property elements", mar=c(0,0,4,0))
+corrplot.mixed(cor(da), lower.col = "#d88121", number.cex=0.7, tl.pos = "lt", upper.col = "#8c5e4a", tl.col="#341e12", tl.cex=0.7, tl.srt = 45, title = "Figure 8: Correlation plot of property elements", mar=c(0,0,4,0))
 ```
 
 A correlation plot of 14 property elements can be seen on figure 8. Price of properties appears to have a moderately strong positive correlation with the size of properties (in square meters), year of sale and number of rooms, living rooms, floors, showers and toilets in a property. 
