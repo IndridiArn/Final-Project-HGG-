@@ -191,7 +191,7 @@ ggplot(f3, aes(x=nuvirdi/1e3,y=age, group = ibteg, color = ibteg)) +
 In figure 5 we have the average property price based on age and type of property. As expected, single-family houses are on average more expensive than apartment buildings and the older the property the more inexpensive it is. Age appears to become irrelevant for single-family houses priced 50 million isk and above.   
 
 ```{r, fig.align = 'center'}
-# price per square meter by municipalityf
+# price per square meter by municipality
 data <- data %>% 
   mutate(fermetraverd = nuvirdi/ibm2)
 ggplot(data, aes(x = fermetraverd, y = svfn, fill = svfn)) +
@@ -203,7 +203,7 @@ ggplot(data, aes(x = fermetraverd, y = svfn, fill = svfn)) +
         panel.background = element_blank(), legend.position = "none") + 
   scale_fill_manual(values = sample(ColorsDT$Color)) + 
   scale_color_manual(name = "Type of property",values=sample(ColorsDT$Color)) +
-  xlim(c(0, 75))
+  xlim(c(0, 1000))
 ```
 
 In figure 6 we see price per square meter by municipality. We can gather that prices per square meter are a bit higher for properties in Garðabær and Seltjarnarnes (and Mosfellsbær to a degree) than for properties in the other municipalities. 
