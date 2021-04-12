@@ -272,6 +272,7 @@ The last five attributes mentioned here above also appear to have a moderately s
 ## Part II: Predicting sale worths 
 
 In this part we will predict sale worths using the lasso and boosting methods. 
+We will start by doing a factor analysis of the dataset to get a better idea of its nature. 
 
 ```{r}
 set.seed(4)
@@ -284,7 +285,7 @@ library(factoextra)
 #corrplot(lkj1)
 ```
 
-  Factor analysis on the data set as a whole obtained 25 dimensions all with eigenvalues higher than one, indicating that the dimension accounts for more variance than one of the original variables. These 25 dimensions only collectively explained around 66% of data variance. Neighbourhood had no correlation to any dimensions so it will be removed for further analysis, as will worth per square meter since it had high correlation to other predictors. 
+Factor analysis on the data set as a whole obtained 25 dimensions all with eigenvalues higher than one, indicating that the dimension accounts for more variance than one of the original variables. These 25 dimensions only collectively explained around 66% of data variance. Neighbourhood had no correlation to any dimensions so it will be removed for further analysis, as will worth per square meter since it had high correlation to other predictors. 
 
 ```{r}
 res.famd <- FAMD(blabb,
@@ -341,7 +342,7 @@ ba %>%
 fviz_contrib(res.famd, choice="var", axes=1:7) + ggtitle("Figure 10: Variable contribution")
 ```
 
-  Figure 10 shows how much data variability variables explain. Clearly municipality explains the most variablity compared to the other variables.
+  Figure 10 shows how much data variability the variables explain. Clearly, municipality explains the most variability compared to the other variables.
 
 ```{r}
 lkj <- get_famd_var(res.famd)$cos2
@@ -350,7 +351,7 @@ corrplot(lkj)
 
 LAGA: næ ekki að gera þessa mynd fína!
 
-  Here we can see how the variables influence each dimension. This suggests splitting municipality, which aligns with previous information (see Figure 10). Additionally it seems like the number of shower and bath a property has might work together, perhaps as number of master bathrooms. Sales year seems like a strong variable on it's own. 
+  Here we can see how the variables influence each dimension. This suggests splitting municipality, which aligns with previous information (see Figure 10). Additionally it seems like the number of showers and baths a property has might work together, perhaps as number of master bathrooms. Sales year seems like a strong variable on it's own. 
   
   Only the first seven dimensions had eigenvalues above one. Therefore we might assume that splitting municipality would only make two of it's regions strong predictors. All variables included in the first dimension, except for property pricing and property type, might work as a unit as property size.
 
@@ -431,7 +432,7 @@ r2train.lasso <- percent(lasso.mod$dev.ratio)
 
   The model explained around `r r2.lasso` of property worth variance ($R^2$). With training error around `r lasso.trainmse` m.ISK and test error around `r lassomse.` m.ISK. 
 
-  In align with the factor analysis the municipality regions do seem influential for property worth as seperate predictors. Additionally, number of toilets and bathtubs seem to have similar effect on property pricing and might be considered as a singular predictor as noted earlier.
+  In alignment with the factor analysis, the municipality regions do seem influential for property worth as seperate predictors. Additionally, number of toilets and bathtubs seem to have similar effect on property pricing and might be considered as a singular predictor as noted earlier.
   
   The main issue with Lasso are correlated/confounding variables. As seen earlier (see Figure 10) square meter explained the second most data variance. Here we see that variable is included but rather low, however all the variables from the first dimension of the factor analysis are also included here. Since Lasso is blind to their influence on each other it is important to keep that in mind and not exclude the effect that square meter might have on property worth. 
   
@@ -461,88 +462,66 @@ In Figure 13 we see the relationship between lasso´s predicted values and obser
 
 #### Boosting
 
-```{r, warning = F, message = F, echo = F, fig.align = 'center'}
+
+```{r}
 set.seed(1)
-TRAIN <- sample(1:nrow(data), nrow(data)*0.7)
-train.set <- data[TRAIN,-18]
-test.set <- data[-TRAIN,-18]
-# Tuning lambda
-lambdaGrid <- seq(-1, 1, length.out = 20) # Typical values are 0.01 or 0.001
-lambdas <- 10^lambdaGrid
-test.MSE <- rep(NA, length(lambdas)) #define list to store training errors
-for (i in 1:length(lambdas)) {
-  GBM.boost <- gbm(nuvirdi ~ ., data = train.set,
-                     distribution = "gaussian", 
-                     shrinkage = lambdas[i])
- 
-   boost.predict <- predict(GBM.boost, test.set, 
-                                    n.trees = 100) #breyta þessu í 1000 síðar. Ekki hægt að overfitta í boosting? 
-   test.MSE[i] <- round(mean((boost.predict - test.set$nuvirdi)^2), 2)
-}
-min.testMSE <- min(test.MSE) # gives the lowest test MSE
-min.lambda. <- lambdas[which.min(test.MSE)]
-min.lambda <- round(min.lambda.,2)# gives the lambda corresponding to lowest test
-data.frame(mse=test.MSE, 
-           lambda=lambdas) %>%
-  ggplot(aes(x=lambda,y=test.MSE,
-             col= ifelse(round(lambda,2)==min.lambda, "#493021","#d88121"))) +
-  geom_point(size=3) + 
-  geom_line() +
-  scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
-               labels = trans_format("log10", math_format(10^.x))) +
-  scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
-               labels = trans_format("log10", math_format(10^.x))) +
-  scale_color_identity() + 
-  xlab( expression(paste("Shrinkage value(", lambda, ")"))) + 
-  ylab("Cross-Validation MSE") +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        panel.background = element_blank(), legend.position = "none", plot.title = element_text(hjust = 0.5)) + 
-  ggtitle("Figure 14: Test MSE for a range of lambda values") + 
-  annotate(geom="text",y=10^(10+log10(min.testMSE)), x=10^log10(min.lambda), label= expression(paste(lambda, "= 1.44")))
+
+datam <- data %>% select(-matssvaedi)
+TRAIN <- sample(1:nrow(datam), nrow(datam)*0.7)
+train.set <- datam[TRAIN,]
+test.set <- datam[-TRAIN,]
+
+trainctrl <- trainControl(method = "repeatedcv", number = 5)
+
+myBestGrid2 <- data.frame("n.trees" = 500,"interaction.depth"= 10,"shrinkage"=0.1,"n.minobsinnode"=10)
+
+gbm_tree_final <- train(nuvirdi ~ ., data = train.set, 
+                        method="gbm", 
+                        distribution = "gaussian", 
+                        trControl = trainctrl, 
+                        verbose = FALSE, 
+                        tuneGrid = myBestGrid2)
 ```
+We ran cross-validation on multiple combinations of trees. 
+Tuning the parameters resulted in a model with 500 boosting iterations (n.trees = 500), a max tree depth of ten (interaction depth = 10), and a $lambda$ of 0.1. The minimum terminal node size was kept constant at 10. 
 
-Figure 14 shows the test error based on a range of shrinkage $\lambda$ values. The CV optimal value was `r min.lambda` which obtained the test MSE of `r round(min.testMSE/1e3, 2)` m.isk. 
-
-Bæta hér inn tuning parameter fyrir n.trees?
+PLOT IDDA HÉR
 ```{r}
 
 ```
+In figure X we see a plot of the cross-validation according to measures of tree size and shrinkage value. We can see here out of the two options.....
 
-Bæta hér inn tuning parameter fyrir mtry?
+Now we'll use the training model to predict the worth of a property for the test data and see the test MSE. 
 ```{r}
-
-```
-
-MUNA = BREYTA n.trees í hærri tölu! 
-
-```{r, fig.align = 'center'}
-set.seed(1)
-boost <- gbm(nuvirdi ~ ., data = train.set,
-             distribution = "gaussian",
-             shrinkage = min.lambda., # common lambda to use (0.01 or 0.001). BREYTA í BEST LAMBDA
-             n.trees = 100)
 library(vip)
-vip(boost, aesthetics = list(fill = c("#d48149","#da9566","#ca6e2f","#ad5e28","#e1a983","#e8bda0","#2e1f18",
+NewBoost.predict <- predict(gbm_tree_final, newdata = test.set)
+
+#which variables are most important. 
+
+vip(gbm_tree_final, aesthetics = list(fill = c("#d48149","#da9566","#ca6e2f","#ad5e28","#e1a983","#e8bda0","#2e1f18",
                                       "#462f25","#5d3f31","#904e22")),
     mapping = aes_string(fill = "Variable")) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(),
         plot.title = element_text(hjust = 0.5)) + 
-  ggtitle("Figure 15: Relative influence of variables using boosting") + 
+  ggtitle("Figure X: Relative influence of variables using boosting") + 
   labs(x = "Influential variables", y = "Relative influence") 
-  
- 
-# Reiknað út RMSE 
-library(Metrics)
-predictions <- boost %>% predict(test.set)
-rmse.boost <- rmse(predictions, test.set$nuvirdi)
+
+#What is the test MSE
+BOOST.test.MSE <- round(mean((NewBoost.predict - test.set$nuvirdi)^2), 2)
+
+# Reiknað út RMSE
+
+rmse.boost <- sqrt(BOOST.test.MSE)
 ```
 
-LAGA: y-axis á plottinu. OMG, hvernig fer maður að þessu!
+As shown in figure X, there are four variables that have high relative importance. They are square meters of property, the year the property was bought, the age of the property and at last, municipality the property is in. Square meters per property is by far the most important variable. In figures X and X in part I we learned that the more square meters are in a property the more expensive it is. We also learned that property prices increase the younger the property is. 
 
-As shown in figure 15, there are four variables that have high relative importance according to Boosting. They are square meters of property, the year the property was bought, the number of bathrooms and municipality. Square meters per property is by far the most important variable. In figures 3 and 7 in part I we learned that the more square meters and bathrooms are in a property the more expensive it is. We also learned that property worths increase the younger the property is.
+The test set MSE which is `r BOOST.test.MSE`. 
 
+
+LAGA ÞESSA TÖFLU. BERGRÓS, gætir þú tékkað á hvort hún sé rétt? 
 ```{r}
-tafla <- data.frame(Boosting <- c(MSE=paste0(round(min.testMSE/1e3,2)," m.ISK"),
+tafla <- data.frame(Boosting <- c(MSE=paste0(round(BOOST.test.MSE/1e6,2)," m.ISK"),
           RMSE=paste0(round(rmse.boost/1e3,2)," m.ISK"),
           Variables="10"),
           Lasso <- c(MSE=paste0(lassomse.," m.ISK"),
@@ -553,10 +532,7 @@ t(tafla) %>%
   kable(align="c", caption = "Table 1: Comparison of boosting and the lasso") %>%
   kable_styling(full_width = F)
 ```
-In table 1 we can see the results from both the lasso approach and boosting. The lasso leads to a lower test MSE meanwhile boosting leads to a lower RMSE.
-ATH, þessar niðurstöður gætu breyst þegar við breytum n.trees.
-
-Í Boosting eru í raun þrír tuning parameters: 1) lambda, 2) fjöldi trees (n.trees) og 3) mtry: variables considered at each split. Ég reiknaði út test errorið as a function of lambda en það væri líka hægt að gera út frá trees (getum kannski skoðað það ef tími gefst). Við gerum þetta allavega bara út frá lambda í verkefnunum. Annað: Random forest er bara með einn tuning parameter (mtry) og er töluvert einfaldara, væri hægt að framkvæma það líka í staðinn. 
+In table 1 we can see the results from both the lasso approach and boosting. The lasso leads to a lower test MSE meanwhile boosting leads to a lower RMSE. 
 
 
 ## Part II
