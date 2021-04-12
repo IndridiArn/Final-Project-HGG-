@@ -48,8 +48,10 @@ The dataset contains many variables, some of which have been excluded from analy
 
 ## Reading data and cleanup
 ```{r}
-data <- read_delim("https://www.skra.is/library/Samnyttar-skrar-/Fyrirtaeki-stofnanir/Fasteignamat-2019/gagnasafn_ib_2018.csv", ";", escape_double = FALSE, locale = locale(encoding = "ISO-8859-1"),
-                                     trim_ws = TRUE)
+data <- read_delim("https://www.skra.is/library/Samnyttar-skrar-/Fyrirtaeki-stofnanir/Fasteignamat-2019/gagnasafn_ib_2018.csv", ";", escape_double = FALSE, locale = locale(decimal_mark = ",", 
+        grouping_mark = ".", encoding = "ISO-8859-1"), 
+    trim_ws = TRUE)
+    
 data <- data %>% select(kdagur, nuvirdi, byggar, lyfta, ibm2, fjhaed, fjbilsk, fjbkar, fjsturt, fjklos, fjeld, fjherb, fjstof, fjgeym, matssvaedi, ibteg, svfn) %>%
   filter(matssvaedi < 1000) %>%
   mutate(lyfta = ifelse(lyfta >= 1, 1, 0)) %>%
