@@ -209,18 +209,24 @@ In figure 6 we see price per square meter by municipality. We can gather that pr
 
 ```{r}
 # fjölbýli vs einbýli eftir municipality. Figure 7
+einbyli.perc <- percent(length(data$ibteg[data$ibteg==1])/length(data$ibteg))
+fjolbyli.perc <- percent(length(data$ibteg[data$ibteg==0])/length(data$ibteg))
+perc.list <- c(fjolbyli.perc,einbyli.perc)
+
 data7 <- data %>% 
   mutate(ibteg = ifelse(data$ibteg == 1, "Single-family house", "Apartment building"))
+
+data7$ibtegPerc <- ifelse(data$ibteg==1,einbyli.perc,fjolbyli.perc)
 
 data7 %>% 
   ggplot(aes(x = ibteg, fill = ibteg)) + 
   geom_bar(stat= "count", position = "dodge") +
+  geom_text(aes(ibteg,1, label=ibtegPerc,vjust=-10.8)) +  #Hræðileg hack lausn með því að setja 1 á milli ibteg og label. How Why WHAT
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         panel.background = element_blank()) + 
   ggtitle("Figure 7: Property type by municipality") +
   scale_fill_manual(name = "Property type", values=sample(ColorsDT$Color)) + 
-  labs(x = " ", y = "Total") + 
-  ylim(0, 30000) 
+  labs(x = " ", y = "Total")  +  ylim(0, 30000) 
 ```
 LAGA: Gæti verið gaman að bæta inn municipality hér. Eða bara í hið minnsta bæta inn % hlutfallið af fjölb. og einbýlishúsum á bar-in. 
 
