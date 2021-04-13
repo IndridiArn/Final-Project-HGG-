@@ -612,7 +612,7 @@ detach("package:MASS", unload=TRUE)
 
 The test error rate of the logistic regression model is  `r meanLOG`, meaning the model predicted incorrectly nearly  `r meanLOGperc` of the time. Similar result to that of QDA.   
 
-```{r}
+```{r fig.align = 'center'}
 old <- data.frame(QDA = c(paste0(round(sum(diag(kabletable))/sum(kabletable)*100),"%"),
                           paste0(round(prop.table(kabletable)*100),"%")),
          LR =c(paste0(round(sum(diag(kabletable2))/sum(kabletable2)*100),"%"),
@@ -627,7 +627,7 @@ In table 4 we see a comparison of the results between QDA and logistic regressio
 
 
 Finding out the optimal mtry value for random forrest 
-```{r}
+```{r fig.align = 'center'}
 # randforr_MSE <- rep(NA,ncol(train.set2)-1)
 # #þessi skipun tekur um 10 min að keyra í minni tölvu. 
 # 
@@ -657,7 +657,7 @@ points(best.CV, randforr_list_MSE[best.CV], col = "darkred",pch = 10,cex =30)
 
 
 Using random Forest with the optimal mtry variable which is `r best.CV`.
-```{r}
+```{r fig.align = 'center'}
 #library(rpart)   # tveir tree plot pakkar 
 #library(visreg)  # Sjáum hvort það sé tími til að nota þá. 
 randforr_best <- randomForest(AgeNew~.,data=train.set2,mtry=best.CV,importance=T,ntree=500)
