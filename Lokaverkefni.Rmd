@@ -399,7 +399,7 @@ vi(lasso.mod) %>% ggplot(aes(Importance, reorder(Variable,Importance),
   geom_bar(stat = "identity", position = "dodge")+ 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         panel.background = element_blank(), legend.direction = "horizontal", legend.position = c(0.7,0.7)) + 
-  scale_fill_manual(values=sample(ColorsDT$Color)) + labs(x="Beta coefficient", y=" ") + ggtitle(expression(paste("Figure 9: Predictors with non-zero Lasso coefficients with ", lambda, " = 0.36")))
+  scale_fill_manual(values=sample(ColorsDT$Color)) + labs(x="Beta coefficient", y=" ") + ggtitle(expression(paste("Figure 11: Predictors with non-zero Lasso coefficients with ", lambda, " = 0.36")))
 
 test <- blabb[-train,]
 lasso.pred <- predict(lasso.mod, s=bestlam, newx=x[train,])
@@ -415,7 +415,7 @@ lasso.trainmseNew <- log10(round(mean(lasso.pred[,1]),2))
 lassomse.new <- log10(round(mean(lasso.pred.[,1]),2))
 ```
 
-  Figure 12 shows the `r nrow(vi(lasso.mod))` predictors that Lasso deemed influental regarding property worth. The bottom seven variables have a negative relationship with property worth while the remaining have a positive relationship.  
+  Figure 11 shows the `r nrow(vi(lasso.mod))` predictors that Lasso deemed influental regarding property worth. The bottom seven variables have a negative relationship with property worth while the remaining have a positive relationship.  
 
   The model explained around `r r2.lasso` of property worth variance ($R^2$). With training error around `r lasso.trainmseNew` m.ISK and test error around `r lassomse.new` m.ISK. 
 
@@ -441,10 +441,10 @@ g2 <- gaga %>%
         geom_abline(slope=1,intercept = 0,lty=2, col= "#302016") +
 scale_x_continuous(labels = label_number(suffix = " m.ISK"), limits=c(0,150),breaks = seq(0,150, by=50)) +
   scale_y_continuous(labels = label_number(suffix = " m.ISK"))
-grid.arrange(g2,g1, nrow=1,top="Figure 10: Lasso predicted versus observed property worths", bottom="Predicted", left="Observed")
+grid.arrange(g2,g1, nrow=1,top="Figure 12: Lasso predicted versus observed property worth", bottom="Predicted", left="Observed")
 ```
 
-In Figure 13 we see the relationship between lasso´s predicted values and observed values. The right graph includes all values in the data set and we appear to have an extreme value at the top of the plot. 
+In Figure 12 we see the relationship between lasso´s predicted values and observed values. The right graph includes all values in the data set and we appear to have an extreme value at the top of the plot. 
   The left graph is a close-up of all the values excluding the extreme value. The relationship seems stronger for lower worthd properties but starts to gradually worsen as the worth goes up.
 
 #### Boosting
@@ -474,9 +474,9 @@ We ran cross-validation on multiple combinations of trees.
 Tuning the parameters resulted in a model with 500 boosting iterations (n.trees = 500), a max tree depth of ten (interaction depth = 10), and a $\lambda$ of 0.1. The minimum terminal node size was kept constant at 10. 
 
 ```{r fig.align='center'}
-knitr::include_graphics("https://i.imgur.com/1UVpsKy.png")
+knitr::include_graphics("https://i.imgur.com/lOfx4DZ.png")
 ```
-In figure 14 we see a plot of the RMSE via cross-validation according to various measures of tree size and shrinkage value. We can see here that using 500 boosting iterations, with $\lambda$ of 0.1 and a max tree depth of 10 results in the lowest RMSE out of all the tree combinations that were created. 
+In figure 13 we see a plot of the RMSE via cross-validation according to various measures of tree size and shrinkage value. We can see here that using 500 boosting iterations, with $\lambda$ of 0.1 and a max tree depth of 10 results in the lowest RMSE out of all the tree combinations that were created. 
 
 ```{r fig.align = 'center'}
 NewBoost.predict <- predict(gbm_tree_final, newdata = test.set)
@@ -488,7 +488,7 @@ boost <- vip(gbm_tree_final, aesthetics = list(fill = c("#d48149","#da9566","#ca
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(),
         plot.title = element_text(hjust = 0.5)) + 
   labs(x = " ", y = "Relative influence") 
-boost + ggtitle("Figure 15: Relative influence of variables using boosting") 
+boost + ggtitle("Figure 14: Relative influence of variables using boosting") 
 
 #What is the test MSE
 BOOST.test.MSE <- log10(round(mean((NewBoost.predict - test.set$nuvirdi)^2), 2))
@@ -498,7 +498,7 @@ BOOST.test.MSE <- log10(round(mean((NewBoost.predict - test.set$nuvirdi)^2), 2))
 rmse.boost <- log10(sqrt(BOOST.test.MSE))
 ```
 
-As shown in figure 15, there are three variables that have higher relative importance. They are square meters of property, the year the property was bought and the age of the property. Square meters per property is by far the most important variable. In figures 5 and 8 in the exploratory analysis we learned that the more square meters are in a property the more it is worth and that property worth increases the younger the property is. 
+As shown in figure 14, there are three variables that have higher relative importance. They are square meters of property, the year the property was bought and the age of the property. Square meters per property is by far the most important variable. In figures 5 and 8 in the exploratory analysis we learned that the more square meters are in a property the more it is worth and that property worth increases the younger the property is. 
 
 ```{r}
 library(Metrics)
@@ -522,7 +522,10 @@ boost <- com %>% ggplot(aes(Importance.y,Variable)) +
   scale_fill_manual(values=sample(ColorsDT$Color)) + labs(x="Relative Influence", y=" ") + ggtitle("Boosting") + scale_y_discrete(labels=NULL) 
 
 grid.arrange(lasso, boost, nrow=1)
+```{r}
 
+FIGURE 15 er nýja BOOST og LASSO SAMAN PLOTTIÐ
+```{r}
 tafla <- data.frame(Boosting <- c(MSE=round(BOOST.test.MSE, 3),
           RMSE=round(rmse.boost, 3),
           Variables="10"),
@@ -576,10 +579,7 @@ meanQDA <- round(1-(mean(QDA.pred$class == test.set2$AgeNew)), 2)
 meanQDAperc <- percent(meanQDA)
 ```
 
-
-
 The test error rate of the LDA model is  `r meanQDA`, meaning the model predicted incorrectly nearly  `r meanQDAperc` of the time. 
-Umfjöllun hér um false positive og false negative rate (sjá glósur).
 
 #### Logistic regression 
 ```{r}
