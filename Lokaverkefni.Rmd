@@ -403,7 +403,7 @@ lasso.testMSE <- log10(round((mean(lasso.pred.[,1])^2),2))
 lasso.RMSE <- log10(round(sqrt(lasso.testMSE), 2))
 ```
 
-  Figure 11 shows the `r nrow(vi(lasso.mod))` predictors that Lasso deemed influental regarding property worth. The model explained around `r r2.lasso` of property worth variance ($R^2$). With training error around `r round(lasso.trainmseNew, 2)` and test error around `r round(lasso.testMSE, 2)`. 
+  Figure 11 shows the `r nrow(vi(lasso.mod))` predictors that Lasso deemed influental regarding property worth. The model explained around `r r2.lasso` of property worth variance ($R^2$). With training error around `r round(lasso.trainmseNew, 3)` and test error around `r round(lasso.testMSE, 3)`. 
    
   
 ```{r, fig.align = 'center'}
@@ -428,7 +428,7 @@ grid.arrange(g2,g1, nrow=1,top="Figure 12: Lasso predicted versus observed prope
 ```
 
 In Figure 12 we see the relationship between lasso´s predicted values and observed values. The right graph includes all values in the data set and we appear to have an extreme value at the top of the plot. 
-  The left graph is a close-up of all the values excluding the extreme value. The relationship seems stronger for lower worth properties but starts to gradually worsen as the worth rises.
+  The left graph is a close-up of all the values excluding the extreme value. The relationship seems stronger for properties worth less but starts to gradually worsen as the worth increases.
 
 #### Boosting
 
@@ -527,9 +527,9 @@ grid.arrange(lasso, boost, faa, nrow=1, top="Figure 15: Comparison of Lasso, Boo
 
 ```
 
-In Figure 15 we can see the results from both the lasso approach and boosting. The MSE and RMSE for boosting is lower than it is for Lasso. Additionally it includes 10 variables while Lasso has 19. The approaches do not seem to evaluate the variables the same way, the only one that seems consistantly influential is the sales year. 
+In Figure 15 we can see the results from both the lasso approach and boosting. The MSE and RMSE for boosting is lower than it is for lasso. Additionally it includes 10 variables while Lasso has 19. The approaches do not seem to evaluate the variables the same way, the only one that seems consistantly influential is the sales year. 
 
-  Boosting evaluated square meter as the most influential variable. Lasso did not null it out but was second lowest of the remaining variables. That variable had the highest correlation to the first dimension obtained by the factor analysis. From this we might assume that square meter is influential regarding property worth, but as an confounding variable. Which is Lasso's weakpoint. 
+  Boosting evaluated square meter as the most influential variable. Lasso did not null out the effect of this variable but still made it the second lowest coefficient of them all. Square meters had the highest correlation to the first dimension obtained by the factor analysis. From this we might assume that square meter is influential regarding property worth, but acts as a confounding variable. This is a weakpoint of the lasso approach. 
 
 ## Part III: Predicting whether a property is old or new
 
@@ -637,7 +637,7 @@ randforr_list_MSE.DF %>% ggplot() +
   ylim(0.14, 0.20)
 ```
 
-In figure 16 we see the test MSE by varying degrees of variables used to make the tree. The lowest test MSE can be found when using 8 variables and the corresponding test MSE is `r round(min.testMSE, 2)`.
+In figure 16 we see the test MSE by varying degrees of variables used to make the tree (500 trees were grown). The lowest test MSE can be found when using 8 variables and the corresponding test MSE is `r round(min.testMSE, 2)`. 
 
 
 ```{r fig.align='center'}
@@ -771,30 +771,19 @@ gbm_tree_final <- train(Prop.Worth ~ ., data = train.set,
 
 ```
 
-
-
 ```{r}
 
 NewBoost.predict <- predict(gbm_tree_final, newdata = bonus)
-
-#which variables are most important. 
-boost2 <- vip(gbm_tree_final, aesthetics = list(fill = c("#d48149","#da9566","#ca6e2f","#ad5e28")),
-    mapping = aes_string(fill = "Variable")) + 
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(),
-        plot.title = element_text(hjust = 0.5)) + 
-  labs(x = " ", y = "Relative influence") 
-boost2 + ggtitle("Figure 18: Relative influence of variables using boosting") 
 
 #What is the test MSE
 BOOST.test.MSE <- log10(round(mean((NewBoost.predict - test.set$Prop.Worth)^2), 2))
 
 # Reiknað út RMSE
-
 rmse.boost <- log10(sqrt(BOOST.test.MSE))
 ```
 We ran cross-validation on multiple combinations of trees (using the old data set) using only the variables that overlapped in both data sets. Tuning the parameters resulted in a model with 100 boosting iterations (n.trees = 100), a max tree depth of five (interaction depth = 5), and a λ of 0.125. The minimum terminal node size was kept constant at 10.
 
-<<<<<<< HEAD
+
 ```{r}
 boost22 <- vi(gbm_tree_final)
 booooo <- merge(boos, boost22, by="Variable")
@@ -813,10 +802,7 @@ boostfyrri <- booooo %>% ggplot(aes(Importance.x,Variable,
         axis.text.y=element_blank(),
         axis.ticks.y=element_blank()) +
   scale_fill_manual(values=sample(ColorsDT$Color)) + labs(x="Relative Influence", y=" ") + ggtitle("Boosting 2012-2018") 
-grid.arrange(boostbonus,boostfyrri, nrow=1, top="Figure 19: Boosting comparison") 
+grid.arrange(boostbonus,boostfyrri, nrow=1, top="Figure 18: Boosting comparison") 
 ```
 
-=======
-
-As shown in figure 16, there are three variables out of the four that have higher relative importance. They are square meters of property, the year the property was bought and the age of the property. Square meters per property is by far the most important variable, which aligns with the results from before. 
->>>>>>> 3e1ba3512416d03db4c4efbfc666aadaf0700e04
+As shown in the left plot on figure 18, there are three variables out of the four that have higher relative importance. They are square meters of property, the year the property was bought and the age of the property. Square meters per property is by far the most important variable, which aligns with the results on the right plot. Overall, the model via boosting gives very similar results on the new dataset from 2021. 
