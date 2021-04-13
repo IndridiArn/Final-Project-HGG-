@@ -46,9 +46,8 @@ In this assignment we carry out an analysis of a dataset containing information 
 
   The first part will explore the data visually. The second part will predict properties worth using the lasso and boosting methods. The third part will predict whether a property is old or new using QDA, logistic regression and random forest. Stick around to see if we cracked the bonus question... 
 
-The original dataset was very high dimensional. Irrelevant variables and observations were excluded. Focus will be on data concerning single-family houses and apartment building located in the Capital Region of Iceland. The resulting dataset contains approximately 35 thousand observations and 17 variables regarding properties worth, municipality, age of construction, property type and property area among other.
+The original dataset was very high dimensional. Irrelevant variables and observations were excluded. Focus will be on data concerning single-family houses and apartment building located in the Capital Region of Iceland. The resulting dataset we start off with contains approximately 35 thousand observations and 17 variables regarding properties worth, municipality, age of construction, property type and property area among other. 
 
-## Reading data and cleanup
 ```{r}
 data <- read_delim("https://www.skra.is/library/Samnyttar-skrar-/Fyrirtaeki-stofnanir/Fasteignamat-2019/gagnasafn_ib_2018.csv", ";", escape_double = FALSE, locale = locale(decimal_mark = ",", 
         grouping_mark = ".", encoding = "ISO-8859-1"), 
