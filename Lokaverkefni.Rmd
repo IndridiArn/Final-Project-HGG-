@@ -2,11 +2,13 @@
 title: "Lokaverkefni nafn hér"
 author: "Bergrós Skúladóttir, Indriði Arnaldsson & Íris Aníta Eyþórsdóttir"
 output:
-  prettydoc::html_pretty:
-    theme : hpstr
-    highlight: github
-    toc: true
-    toc_depth: 2
+    rmdformats::downcute:
+      self_contained: true
+      thumbnails: true
+      lightbox: true
+      gallery: false
+      highlight: tango
+  
 ---
 
 ```{r setup, include=FALSE}
@@ -40,6 +42,7 @@ library(tree)
 library(caret)
 library(Metrics)
 library(grid)
+library(vip)
 ```
 
 ## Introduction 
@@ -74,9 +77,7 @@ data$matssvaedi <- recode_factor(data$matssvaedi, `11`="Rvk:Vesturbær", `20` = 
                                  `400`="Seltjarnarnes", `500`="Grb:Miðbær", `510`="Grb:Ásar", `511`="Grb:Arnarnes", `520`="Grb:Sjáland", `530`="Grb:Hraunholt", `540`="Grb:Arnarnes", `550`="Grb:Urriðarholt", `560`="Grb:Flatir", `590`="Grb:Annað",`700`="Grb:Álftanes", `600`="Hfj:Miðbær", `620`="Hfj:Holt", `630`="Hfj:Vellir", `640`="Hfj:Ásland", `650`="Hfj:Setberg", `660`="Hfj:Flensborg", `670`="Hfj:Vellir", `680`="Hfj:Holt", `800`="Mos:Miðbær", `810`="Mos:Teigar", `820`="Mos:Leirvogstunga", `830`="Mos:Dalur", `840`="Mos:Hlíðar", `850`="Mos:Helgafell", `890`="Mos:Annað", `999`="Kóp:Annað")
 
 library(Hmisc)
-var.labels <- c(nuvirdi = "Property Worth", lyfta="Elevator", ibm2 = "Sqm", fjhaed = "Floors", fjbilsk = "Parking", fjbkar = "Bathtubs", fjsturt = "Showers", fjklos="Toilets", fjeld = "Kitchens", fjherb="Rooms", fjstof = "Living Rooms", fjgeym = "Storage", matssvaedi = "Neighbourhood", ibteg = "Prop. Type", svfn = "Municipality", yearkeypt = "Salesyear", age = "Age", fermetraverd = "Price per Sqm", svfnMosfellsbaer = "Mosfellsbær", svfnHafnarfjordur = "Hafnarfjörður", svfnSeltjarnarnes = "Seltjarnarnes", svfnGardabaer = "Garðabær", svfnKopavogur = "Kópavogur", ibteg1 = "Single-family property", ibteg0 = "Apartment", lyfta1 = "Elevator present", lyfta0 = "No elevator")
-
-var.labels2 <- c(nuvirdi = "Property Worth", lyfta="Elevator", ibm2 = "Sqm", fjhaed = "Floors", fjbilsk = "Parking", fjbkar = "Bathtubs", fjsturt = "Showers", fjklos="Toilets", fjeld = "Kitchens", fjherb="Rooms", fjstof = "Living Rooms", fjgeym = "Storage", matssvaedi = "Neighbourhood", ibteg = "Prop. Type", yearkeypt = "Salesyear", age = "Age", fermetraverd = "Price per Sqm", svfnMosfellsbaer = "Mosfellsbær", svfnHafnarfjordur = "Hafnarfjörður", svfnSeltjarnarnes = "Seltjarnarnes", svfnGardabaer = "Garðabær", svfnKopavogur = "Kópavogur", ibteg1 = "Single-family property", ibteg0 = "Apartment", lyfta1 = "Elevator present", lyfta0 = "No elevator")
+var.labels <- c(nuvirdi = "Prop.Worth", lyfta="Elevator", ibm2 = "Sqm", fjhaed = "Floors", fjbilsk = "Parking", fjbkar = "Bathtubs", fjsturt = "Showers", fjklos="Toilets", fjeld = "Kitchens", fjherb="Rooms", fjstof = "Liv.Rooms", fjgeym = "Storage", matssvaedi = "Neighbourhood", ibteg = "Prop.Type", svfn = "Municipality", yearkeypt = "Salesyear", age = "Age", fermetraverd = "Price-per-Sqm", svfnMosfellsbaer = "Mosfellsbær", svfnHafnarfjordur = "Hafnarfjörður", svfnSeltjarnarnes = "Seltjarnarnes", svfnGardabaer = "Garðabær", svfnKopavogur = "Kópavogur", ibteg1 = "Single-family", ibteg0 = "Apartment", lyfta1 = "Yes", lyfta0 = "No")
 ```
 
 ## Part I: Exploratory Analysis
@@ -194,7 +195,7 @@ data_fjolbylishus %>%
 
 Figure 4 shows the average apartment worth, in each municipality, based on whether there is an elevator or not. Apartments in buildings with an elevator are on average worth more. The percentages on the plot represent the increase in worth for having an elevator in the building. Seltjarnarnes is the only municipality where having an elevator does not increase the apartment worth.  
 
-```{r, fig.align = 'right'}
+```{r, fig.align = 'center'}
 # verð út frá aldri byggingar og tegund húsnæðis.
 data %>% 
   mutate(ibteg=ifelse(data$ibteg == 1, "Single-family house", "Apartment building")) %>%
@@ -295,7 +296,7 @@ library(factoextra)
 
 Factor analysis on the data set as a whole obtained 25 dimensions all with eigenvalues higher than one, indicating that the dimension accounts for more variance than one of the original variables. These 25 dimensions only collectively explained around 66% of data variance. Neighbourhood had no correlation to any dimensions so it will be removed for further analysis, as will worth per square meter since it had high correlation to other predictors. 
 
-```{r}
+```{r fig.align = 'center'}
 res.famd <- FAMD(blabb,
                  sup.var=blabb$nuvirdi,
                  graph=F,
@@ -351,11 +352,12 @@ ba %>%
 #### The lasso
 
 ```{r, fig.align = 'center'}
-x <- model.matrix(nuvirdi~., blabb)[,-1]
+colnames(blabb) <- as.list(var.labels[match(names(blabb), names(var.labels))])
+x <- model.matrix(Prop.Worth~., blabb)[,-1]
 grid <- 10^seq(4,-1, length.out = 10)
 train <- sample(1:nrow(x),nrow(x)*0.7)
 Tr <- blabb[train,]
-y <- Tr$nuvirdi
+y <- Tr$Prop.Worth
 lasso.cv <- cv.glmnet(x[train,],
                       y,
                       alpha=1,
@@ -390,34 +392,12 @@ lasso.mod <- glmnet(x[train,],
                     standardize = T,
                     metric="mse",
                     lambda = bestlam)
-beta <- coef(lasso.mod)
-plot <- as.data.frame(as.matrix(beta))
-plot$coef <- row.names(plot)
-plot <- reshape2::melt(plot, id="coef")
-plot$variable <- as.numeric(gsub("s","",plot$variable))
-plot$lambda <- lasso.mod$lambda[plot$variable+1]
-
-haha <- plot[-1,] %>%
-  mutate(Value = abs(value)) %>% 
-  filter(Value>0) %>%
-  arrange(-Value)
-haha <- data.frame(t(haha))
-library(janitor)
-haha <- haha %>% row_to_names(row_number=1)
-colnames(haha) <- as.list(var.labels[match(names(haha), names(var.labels))])
-haha <- t(haha)
-haha <- data.frame(haha)
-
-haha %>%
-  mutate(Value = as.numeric(Value),
-         value = as.numeric(value),
-         col = ifelse(value>=0, "Positive", "Negative")) %>%
-  ggplot(aes(Value, reorder(rownames(haha),Value),
-             col = col)) +
-  geom_point(size = 3)+ 
+vi(lasso.mod) %>% ggplot(aes(Importance, reorder(Variable,Importance),
+             fill = Sign)) +
+  geom_bar(stat = "identity", position = "dodge")+ 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        panel.background = element_blank(), legend.position = "top") + 
-  scale_color_manual(values=sample(ColorsDT$Color)) + labs(x="Coefficient", y=" ", col="Relationship with property worth:") + ggtitle(expression(paste("Figure 9: Predictors with non-zero Lasso coefficients with ", lambda, " = 0.36")))
+        panel.background = element_blank(), legend.direction = "horizontal", legend.position = c(0.7,0.7)) + 
+  scale_fill_manual(values=sample(ColorsDT$Color)) + labs(x="Beta coefficient", y=" ") + ggtitle(expression(paste("Figure 9: Predictors with non-zero Lasso coefficients with ", lambda, " = 0.36")))
 
 test <- blabb[-train,]
 lasso.pred <- predict(lasso.mod, s=bestlam, newx=x[train,])
@@ -467,7 +447,7 @@ In Figure 13 we see the relationship between lasso´s predicted values and obser
 ```{r}
 set.seed(1)
 datam <- data %>% select(-matssvaedi, -fermetraverd)
-#colnames(datam) <- as.list(var.labels2[match(names(datam), names(var.labels2))])
+colnames(datam) <- as.list(var.labels[match(names(datam), names(var.labels))])
 TRAIN <- sample(1:nrow(datam), nrow(datam)*0.7)
 train.set <- datam[TRAIN,]
 test.set <- datam[-TRAIN,]
@@ -476,7 +456,7 @@ trainctrl <- trainControl(method = "repeatedcv", number = 5)
 
 myBestGrid2 <- data.frame("n.trees" = 500,"interaction.depth"= 10,"shrinkage"=0.1,"n.minobsinnode"=10)
 
-gbm_tree_final <- train(nuvirdi ~ ., data = train.set, 
+gbm_tree_final <- train(Prop.Worth ~ ., data = train.set, 
                         method="gbm", 
                         distribution = "gaussian", 
                         trControl = trainctrl, 
@@ -493,18 +473,17 @@ knitr::include_graphics("https://i.imgur.com/1UVpsKy.png")
 ```
 In figure 14 we see a plot of the RMSE via cross-validation according to various measures of tree size and shrinkage value. We can see here that using 500 boosting iterations, with $\lambda$ of 0.1 and a max tree depth of 10 results in the lowest RMSE out of all the tree combinations that were created. 
 
-```{r}
-library(vip)
+```{r fig.align = 'center'}
 NewBoost.predict <- predict(gbm_tree_final, newdata = test.set)
 
 #which variables are most important. 
-vip(gbm_tree_final, aesthetics = list(fill = c("#d48149","#da9566","#ca6e2f","#ad5e28","#e1a983","#e8bda0","#2e1f18",
+boost <- vip(gbm_tree_final, aesthetics = list(fill = c("#d48149","#da9566","#ca6e2f","#ad5e28","#e1a983","#e8bda0","#2e1f18",
                                       "#462f25","#5d3f31","#904e22")),
     mapping = aes_string(fill = "Variable")) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(),
         plot.title = element_text(hjust = 0.5)) + 
-  ggtitle("Figure 15: Relative influence of variables using boosting") + 
   labs(x = " ", y = "Relative influence") 
+boost + ggtitle("Figure 15: Relative influence of variables using boosting") 
 
 #What is the test MSE
 BOOST.test.MSE <- round(mean((NewBoost.predict - test.set$nuvirdi)^2), 2)
@@ -514,48 +493,7 @@ BOOST.test.MSE <- round(mean((NewBoost.predict - test.set$nuvirdi)^2), 2)
 rmse.boost <- sqrt(BOOST.test.MSE)
 ```
 
-```{r}
-lassovar <- haha %>%
-  mutate(Value = as.numeric(Value),
-         value = as.numeric(value),
-         col = ifelse(value>=0, "Positive", "Negative")) %>%
-  ggplot(aes(Value, reorder(rownames(haha),Value),
-             col = col)) +
-  geom_point(size = 3)+ 
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        panel.background = element_blank(), legend.position = "top") + 
-  scale_color_manual(values=sample(ColorsDT$Color)) + labs(x="Coefficient", y=" ", col="Relationship with property worth:") + ggtitle(expression(paste("Figure 9: Predictors with non-zero Lasso coefficients with ", lambda, " = 0.36")))
-
-
-
-vip(gbm_tree_final, aesthetics = list(fill = c("#d48149","#da9566","#ca6e2f","#ad5e28","#e1a983","#e8bda0","#2e1f18",
-                                      "#462f25","#5d3f31","#904e22")),
-    mapping = aes_string(fill = "Variable")) + 
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(),
-        plot.title = element_text(hjust = 0.5)) + 
-  ggtitle("Figure 15: Relative influence of variables using boosting") + 
-  labs(x = " ", y = "Relative influence") 
-
-```
-
 As shown in figure 15, there are three variables that have higher relative importance. They are square meters of property, the year the property was bought and the age of the property. Square meters per property is by far the most important variable. In figures 5 and 8 in the exploratory analysis we learned that the more square meters are in a property the more it is worth and that property worth increases the younger the property is. 
-
-
-LAGA. BERGRÓS, ég bjó til nýja töflu fyrir neðan þessa. Hún meikar mjög mikið sense. 
-```{r}
-tafla <- data.frame(Boosting <- c(MSE=paste0(round(BOOST.test.MSE/1e6,2)," m.ISK"),
-          RMSE=paste0(round(rmse.boost/1e3,2)," m.ISK"),
-          Variables="10"),
-          Lasso <- c(MSE=paste0(lassomse.," m.ISK"),
-           RMSE=paste0(round(rmse(lasso.pred.[1], y)/1e3,2), " m.ISK"),
-           Variables=nrow(haha)))
-colnames(tafla) <- c("Boosting","Lasso")
-t(tafla) %>%
-  kable(align="c", caption = "Table 1: Comparison of boosting and the lasso") %>%
-  kable_styling(full_width = F)
-```
-
-NÝ TAFLA með lasso og boosting þar sem mse og rmse er kóðað alveg eins. Bjó til nýjar breytur. 
 
 ```{r}
 library(Metrics)
@@ -563,22 +501,36 @@ library(Metrics)
 lasso.testMSE <- log10(round((mean(lasso.pred.[,1])^2),2))
 lasso.RMSE <- log10(round(sqrt(lasso.testMSE), 2))
 
-tafla <- data.frame(Boosting <- c(MSE=paste0(round(BOOST.test.MSE, 2)),
-          RMSE=paste0(round(rmse.boost, 2)),
+lass <- vi(lasso.mod)
+boos <- vi(gbm_tree_final)
+com <- merge(lass,boos, by="Variable")
+lasso <- com %>% ggplot(aes(Importance.x,Variable,
+             fill = Sign)) +
+  geom_bar(stat = "identity")+ 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        panel.background = element_blank(), legend.position = "none") +
+  scale_fill_manual(values=sample(ColorsDT$Color)) + labs(x="Beta coefficient", y=" ") + ggtitle("Lasso")
+boost <- com %>% ggplot(aes(Importance.y,Variable)) +
+  geom_bar(stat = "identity")+ 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        panel.background = element_blank()) +
+  scale_fill_manual(values=sample(ColorsDT$Color)) + labs(x="Relative Influence", y=" ") + ggtitle("Boosting") + scale_y_discrete(labels=NULL) 
+
+grid.arrange(lasso, boost, nrow=1)
+
+tafla <- data.frame(Boosting <- c(MSE=round(BOOST.test.MSE, 3),
+          RMSE=round(rmse.boost, 3),
           Variables="10"),
-          Lasso <- c(MSE=paste0(round(lasso.testMSE, 2)),
-           RMSE=paste0(round(lasso.RMSE, 2)),
-           Variables=nrow(haha)))
+          Lasso <- c(MSE=round(lasso.testMSE, 2),
+           RMSE=round(lasso.RMSE, 2),
+           Variables="19"))
 colnames(tafla) <- c("Boosting","Lasso")
 t(tafla) %>%
-  kable(align="c", caption = "Table 1: Comparison of boosting and the lasso (log10)") %>%
+  kable(align="c",caption = "Table 1: Comparison of boosting and the lasso (log10)") %>%
   kable_styling(full_width = F)
 ```
 
-LAGA: fjölda variables í töflunni! 
-
 In table 1 we can see the results from both the lasso approach and boosting. The MSE and RMSE for boosting is lower than it is for 
-
 
 ## Part III: Predicting whether a property is old or new
 
@@ -661,12 +613,73 @@ old %>%
   kable_styling(full_width = F) %>% 
  add_header_above(c("Table 4: Comparison of QDA and LR" = 3),bold=T,font_size = 16)
 ```
+
 In table 4 we see a comparison of the results between QDA and logistic regression. The two methods have very similar results, although the percentage of false negatives is slightly (still noticably) higher for QDA. 
 
+#### Random forests
+
+```{r fig.align = 'center'}
+# randforr_MSE <- rep(NA,ncol(train.set2)-1)
+# #þessi skipun tekur um 10 min að keyra í minni tölvu. 
+# 
+# for (i in 1:(ncol(train.set2)-1)) {
+#   randforr_cs <- randomForest(AgeNew~.,data=train.set2,mtry=i,importance=T)
+#   pred_randforr <- predict(randforr_cs,newdata = test.set2)
+#   randforr_MSE[i] <- mean((pred_randforr==test.set2$AgeNew))
+#   
+#   print("Höfum keyr í gegn")
+#   print(i)
+#   print("sinnum")
+#                                                         #==================================================================
+# }                                                       #Þetta er cross validation fallið en það tekur ár og öld að keyra
+#randforr_MSE                                             #Uncomment at your own risk !!!!!!!!!!
+#                                                         #==================================================================
+# randforr_MSE_calc <- abs(randforr_MSE-1)
+
+randforr_list_MSE <- c(0.1986711, 0.1682962, 0.1576649, 0.1521595, 0.1497864,0.1489321,0.1482677,0.1463692,0.1483626,0.1464642, 0.1492169, 0.1487423, 0.1510204,0.1506407, 0.1533935) # Breyturnar frá MSE calculations í Cross-Validation.    
+
+min.cv <- which.min(randforr_list_MSE)
+best.CV <- which.min(randforr_list_MSE)
+plot(randforr_list_MSE, type = "b",xlab = "Degree", ylab = "Test MSE", main="Figure X: Test MSE by number of variables")
+points(best.CV, randforr_list_MSE[best.CV], col = "darkred", pch = 20,cex =30)
+```
+
+
+
+
+Using random Forest with the optimal mtry variable which is `r best.CV`.
+```{r fig.align = 'center'}
+#library(rpart)   # tveir tree plot pakkar 
+#library(visreg)  # Sjáum hvort það sé tími til að nota þá. 
+randforr_best <- randomForest(AgeNew~.,data=train.set2,mtry=best.CV,importance=T,ntree=500)
+pred_randforr_best <- predict(randforr_best,newdata = test.set2)
+randforr_MSE_best <- round(1-mean((pred_randforr_best==test.set2$AgeNew)),2)
+plot(randforr_best) # TODO breyta þessu plotti, ég hélt að þetta myndi ekki virka en viti menn.
+#text(randforr_best,pretty=0)
+plot(pred_randforr_best)
+  
+  
+varImpPlot(randforr_best)
+randforr_MSE.perc <- percent(randforr_MSE_best)
+#visreg(randforr_best)     Er að leita að betri pakka til að plotta. 
+#autoplot(randforr_best)
+```
+
+
+`r randforr_MSE.perc`
+
+
+TODO : muna að breyta randomForest í forlykkjur þar sem mtry = (1:ncol(train.set2)) og hafa ntree ekki of mikið. 
+
+Using the Random forest yields a much better test MSE than the regression tree method. 
+TODO útskýra betur og bera saman við niðurstöðurnar frá QDA og LDA.
+
+
+
 #### Bonus
-```{r}
-bonusdataserbyli <- read.csv("bonusdataserbyli.csv")
-bonusdatafjolbyli <- read.csv("bonusdatafjolbyli.csv")
+```{r fig.align = 'center'}
+bonusdataserbyli <- read.csv("https://raw.githubusercontent.com/IndridiArn/Final-Project-HGG-/main/bonusdataserbyli.csv")
+bonusdatafjolbyli <- read.csv("https://github.com/IndridiArn/Final-Project-HGG-/blob/main/bonusdataserbyli.csv")
 sam <- names(bonusdatafjolbyli)[names(bonusdatafjolbyli) %in% names(bonusdataserbyli)]
 bonusdataserbyli <- bonusdataserbyli %>%
   select_if(colnames(bonusdataserbyli) %in% sam)
