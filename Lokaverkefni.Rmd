@@ -688,8 +688,8 @@ TODO útskýra betur og bera saman við niðurstöðurnar frá QDA og LDA.
 
 #### Bonus
 ```{r}
-bonusdataserbyli <- read.csv("bonusdataserbyli.csv")
-bonusdatafjolbyli <- read.csv("bonusdatafjolbyli.csv")
+bonusdataserbyli <- read.csv("https://raw.githubusercontent.com/IndridiArn/Final-Project-HGG-/main/bonusdataserbyli.csv")
+bonusdatafjolbyli <- read.csv("https://github.com/IndridiArn/Final-Project-HGG-/blob/main/bonusdataserbyli.csv")
 sam <- names(bonusdatafjolbyli)[names(bonusdatafjolbyli) %in% names(bonusdataserbyli)]
 bonusdataserbyli <- bonusdataserbyli %>%
   select_if(colnames(bonusdataserbyli) %in% sam)
