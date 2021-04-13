@@ -63,7 +63,6 @@ data <- data %>% select(kdagur, nuvirdi, byggar, lyfta, ibm2, fjhaed, fjbilsk, f
   mutate_at("ibteg", factor) %>%
   na.omit()
          
-  
 data$svfn <- recode_factor(data$svfn, `0000` = "Reykjavik", `1000`= "Kopavogur", `1100` = "Seltjarnarnes",`1300` = "Gardabaer", `1400` = "Hafnarfjordur", `1604` = "Mosfellsbaer")
 data$kdagur <- as.Date(data$kdagur, format = "%d.%m.%Y")
 data$yearkeypt <- format(data$kdagur, format="%Y")
