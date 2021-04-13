@@ -788,9 +788,11 @@ BOOST.test.MSE <- log10(round(mean((NewBoost.predict - test.set$Prop.Worth)^2), 
 
 rmse.boost <- log10(sqrt(BOOST.test.MSE))
 ```
+
 We ran cross-validation on multiple combinations of trees (using the old data set) using only the variables that overlapped in both data sets. Tuning the parameters resulted in a model with 100 boosting iterations (n.trees = 100), a max tree depth of five (interaction depth = 5), and a λ of 0.125. The minimum terminal node size was kept constant at 10.
 
-<<<<<<< HEAD
+As shown in figure 18, there are three variables out of the four that have higher relative importance. They are square meters of property, the year the property was bought and the age of the property. Square meters per property is by far the most important variable, which aligns with the results from before. 
+
 ```{r}
 boost22 <- vi(gbm_tree_final)
 booooo <- merge(boos, boost22, by="Variable")
@@ -812,7 +814,6 @@ boostfyrri <- booooo %>% ggplot(aes(Importance.x,Variable,
 grid.arrange(boostbonus,boostfyrri, nrow=1, top="Figure 19: Boosting comparison") 
 ```
 
-=======
 
-As shown in figure 16, there are three variables out of the four that have higher relative importance. They are square meters of property, the year the property was bought and the age of the property. Square meters per property is by far the most important variable, which aligns with the results from before. 
->>>>>>> 3e1ba3512416d03db4c4efbfc666aadaf0700e04
+
+
