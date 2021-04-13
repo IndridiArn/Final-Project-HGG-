@@ -570,10 +570,9 @@ QDA.pred <- predict(QDA.fit, test.set2)
 kabletable <- table(QDA.pred$class,test.set2$AgeNew)
 rownames(kabletable) <- c("Old", "New")
 colnames(kabletable) <- c("Old","New")
-kbl(kabletable,booktabs=T) %>% 
+kbl(kabletable,booktabs=T, caption = "Table 2: Quadratic discrimnant analysis") %>% 
   kable_styling(full_width = F, position = "center") %>%
-  add_header_above(c(" ","True values" = 2),bold=T)  %>% 
-  add_header_above(c("Table 2: Quadratic discrimnant analysis" = 3),bold=T,font_size = 16)
+  add_header_above(c(" ","True values" = 2),bold=T) 
 
 meanQDA <- round(1-(mean(QDA.pred$class == test.set2$AgeNew)), 2)
 meanQDAperc <- percent(meanQDA)
@@ -594,10 +593,9 @@ LOG.pred[LOG.prob > 0.5] <- 1 #define values as 1 (new property) if probs are ab
 kabletable2 <- table(LOG.pred, test.set2$AgeNew)
 rownames(kabletable2) <- c("Old", "New")
 colnames(kabletable2) <- c("Old", "New")
-kbl(kabletable2) %>% 
+kbl(kabletable2,booktabs=T, caption = "Table 3: Logistic Regression") %>% 
   kable_styling(full_width = F, position = "center") %>%
-  add_header_above(c(" " = 1, "True values" = 2)) %>% 
-  add_header_above(c("Table 3: Logistic Regression" = 3),bold=T,font_size = 16)
+  add_header_above(c(" " = 1, "True values" = 2))
   
 meanLOG <- round(1-(mean(LOG.pred == test.set2$AgeNew)), 2)
 meanLOGperc <- percent(meanLOG)
@@ -682,10 +680,9 @@ The results on figure X indicate that across all of the trees considered in the 
 kabletableRF <- table(pred_randforr_best, test.set2$AgeNew)
 rownames(kabletableRF) <- c("Old", "New")
 colnames(kabletableRF) <- c("Old", "New")
-kbl(kabletableRF) %>% 
+kbl(kabletableRF,caption = "Table 4: Random Forest") %>% 
   kable_styling(full_width = F, position = "center") %>%
-  add_header_above(c(" " = 1, "True values" = 2)) %>% 
-  add_header_above(c("Table 4: Random forest " = 3),bold=T,font_size = 16)
+  add_header_above(c(" " = 1, "True values" = 2)) 
 
 randforr_MSE_best <- round(1-mean((pred_randforr_best==test.set2$AgeNew)),2)
 randforr_MSE_bestP <- percent(randforr_MSE_best)
@@ -701,9 +698,8 @@ old <- data.frame(QDA = c(paste0(round(sum(diag(kabletable))/sum(kabletable)*100
                 paste0(round(prop.table(kabletableRF)*100), "%")),
          row.names = c("Accuracy","True negatives", "False positives", "False negatives", "True positives"))
 old %>%
-  kable() %>%
-  kable_styling(full_width = F) %>% 
- add_header_above(c("Table 5: Comparison of QDA, LR and Random forest" = 4), bold=T , font_size = 16)
+  kable(caption = "Table 5: Comparison of QDA, LR and Random forest") %>%
+  kable_styling(full_width = F)
 ```
 In table 5 we see a comparison of the results between QDA, logistic regression and random forest. Overall, random forest outperforms QDA and logistic regression with the highest percentage of accuracy, true negatives and true positives. QDA and logistic regression have very similar results, although the percentage of false negatives is slightly (but still noticably) higher for QDA.
 
