@@ -691,6 +691,7 @@ kbl(kabletableRF) %>%
   add_header_above(c("Table 4: Random forest " = 3),bold=T,font_size = 16)
 
 randforr_MSE_best <- round(1-mean((pred_randforr_best==test.set2$AgeNew)),2)
+randforr_MSE_best <- percent(randforr_MSE_best)
 ```
 The test error rate of the LDA model is  `r randforr_MSE_best`, meaning the model predicted incorrectly nearly  `r randforr_MSE_bestP` of the time. 
 
