@@ -715,35 +715,70 @@ bonus <- rbind(bonusdatafjolbyli,bonusdataserbyli)
 bonus$utgdag <- as.Date(bonus$utgdag, format = "%m/%d/%Y")
 bonus$year <- format(bonus$utgdag, format="%Y")
 bonus$year <- as.numeric(bonus$year)
+#bonus$Sqm <- as.numeric(bonus$Sqm)
 bonus <- bonus %>%
   filter(bonus$year>2018)
-bonus <- bonus %>% select(nuvirdi, ibm2,fjbilsk,age_studull, year, hverfi)
-var.labels <- c(nuvirdi = "Prop.Worth", ibm2 = "Sqm", fjbilsk = "Parking", age_studull = "Age", year = "Salesyear", hverfi = "Neighbourhood")
+bonus <- bonus %>% select(nuvirdi, ibm2,fjbilsk,age_studull, year)
+var.labels <- c(nuvirdi = "Prop.Worth", ibm2 = "Sqm", fjbilsk = "Parking", age_studull = "Age", bath_fixtures = "Bathrooms", year = "Salesyear", hverfi = "Neighbourhood")
 colnames(bonus) <- as.list(var.labels[match(names(bonus), names(var.labels))])
+
+bonus$Sqm <- as.numeric(bonus$Sqm)
 ```
 
 ```{r}
+datam <- data %>% select(Prop.Worth,Sqm,Parking,Age,Salesyear)
+TRAIN <- sample(1:nrow(datam), nrow(datam)*0.7)
+train.set <- datam[TRAIN,]
+test.set <- datam[-TRAIN,]
+
+trainctrl <- trainControl(method = "repeatedcv", 
+                          number = 5)
+
+# myGrid <- expand.grid(n.trees = c(100, 500), 
+#                       interaction.depth = c(1,2,3,4,5), 
+#                       shrinkage = c(0.001, 0.1, 0.125, 0.2), 
+#                       n.minobsinnode = c(10))
 set.seed(1)
-datam <- data %>% select(Prop.Worth,Sqm,Parking,Age,Salesyear,Neighbourhood)
-gbm_tree_final <- train(Prop.Worth ~ ., data = datam, 
-                        method="gbm", 
-                        distribution = "gaussian", 
-                        trControl = trainctrl, 
-                        verbose = FALSE, 
-                        tuneGrid = myBestGrid2)
+# gbm_tree_tune <- train(Prop.Worth ~ ., data = train.set, 
+#                        method = "gbm", 
+#                        distribution = "gaussian", #### Tekur langan tíma að keyra þetta !
+#                        trControl = trainctrl,     #### niðurstöður eru í myBestGrid2
+#                        verbose = FALSE, 
+#                        tuneGrid = myGrid)
+# 
+# 
+# # which parameters turn out best? 
+# gbm_tree_tune$bestTune
+
+
+# only use the best parameters for the model
+#myBestGrid <- gbm_tree_tune$bestTune
+
+myBestGrid2 <- data.frame("n.trees" = 100,"interaction.depth"= 5,"shrinkage"=0.125,"n.minobsinnode"=10)
+
+gbm_tree_final <- train(Prop.Worth ~ ., data = train.set, 
+                        method="gbm",
+                       distribution = "gaussian", 
+                       trControl = trainctrl,
+                       verbose=FALSE,
+                       tuneGrid=myBestGrid2)
+
+
 ```
 
+
+
 ```{r}
+
 NewBoost.predict <- predict(gbm_tree_final, newdata = bonus)
 
 #which variables are most important. 
-boost <- vip(gbm_tree_final, aesthetics = list(fill = c("#d48149","#da9566","#ca6e2f","#ad5e28","#e1a983","#e8bda0","#2e1f18",
-                                      "#462f25","#5d3f31","#904e22")),
+boost <- vip(gbm_tree_final, aesthetics = list(fill = c("#d48149","#da9566","#ca6e2f","#ad5e28")),
     mapping = aes_string(fill = "Variable")) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(),
         plot.title = element_text(hjust = 0.5)) + 
   labs(x = " ", y = "Relative influence") 
-boost + ggtitle("Figure 18: Relative influence of variables using boosting") 
+boost + ggtitle("Figure 14: Relative influence of variables using boosting") 
 
 #What is the test MSE
 BOOST.test.MSE <- log10(round(mean((NewBoost.predict - test.set$Prop.Worth)^2), 2))
