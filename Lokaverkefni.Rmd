@@ -282,7 +282,7 @@ library(factoextra)
 #corrplot(lkj1)
 ```
 
-Factor analysis on the data set as a whole obtained 25 dimensions all with eigenvalues higher than one, indicating that the dimension accounts for more variance than one of the original variables. These 25 dimensions only collectively explained around 66% of data variance. Neighbourhood had no correlation to any dimensions so it will be removed for further analysis, as will worth per square meter since it had high correlation to other predictors. 
+Factor analysis on the data set as a whole obtained 25 dimensions all with eigenvalues higher than one, indicating that the dimension accounts for more variance than one of the original variables. These 25 dimensions only collectively explained around 66% of data variance. Neighbourhood had no correlation to any dimensions so it will be removed for further analysis. 
 
 ```{r fig.align = 'center'}
 res.famd <- FAMD(blabb,
@@ -400,13 +400,7 @@ lasso.trainmseNew <- log10(round(mean(lasso.pred[,1]),2))
 lassomse.new <- log10(round(mean(lasso.pred.[,1]),2))
 ```
 
-  Figure 11 shows the `r nrow(vi(lasso.mod))` predictors that Lasso deemed influental regarding property worth. The bottom seven variables have a negative relationship with property worth while the remaining have a positive relationship.  
-
-  The model explained around `r r2.lasso` of property worth variance ($R^2$). With training error around `r lasso.trainmseNew` m.ISK and test error around `r lassomse.new` m.ISK. 
-
-  In alignment with the factor analysis, the municipality regions do seem influential for property worth as seperate predictors. Additionally, number of toilets and bathtubs seem to have similar effect on property pricing and might be considered as a singular predictor as noted earlier.
-  
-  The main issue with Lasso are correlated/confounding variables. As seen earlier (see Figure 10) square meter explained the second most data variance. Here we see that variable is included but rather low, however all the variables from the first dimension of the factor analysis are also included here. Since Lasso is blind to their influence on each other it is important to keep that in mind and not exclude the effect that square meter might have on property worth. 
+  Figure 11 shows the `r nrow(vi(lasso.mod))` predictors that Lasso deemed influental regarding property worth. The model explained around `r r2.lasso` of property worth variance ($R^2$). With training error around `r lasso.trainmseNew` and test error around `r lassomse.new`. 
   
 ```{r, fig.align = 'center'}
 gaga <- cbind(lasso.pred,y)
@@ -430,7 +424,7 @@ grid.arrange(g2,g1, nrow=1,top="Figure 12: Lasso predicted versus observed prope
 ```
 
 In Figure 12 we see the relationship between lasso´s predicted values and observed values. The right graph includes all values in the data set and we appear to have an extreme value at the top of the plot. 
-  The left graph is a close-up of all the values excluding the extreme value. The relationship seems stronger for lower worthd properties but starts to gradually worsen as the worth goes up.
+  The left graph is a close-up of all the values excluding the extreme value. The relationship seems stronger for lower worth properties but starts to gradually worsen as the worth rises.
 
 #### Boosting
 
@@ -530,6 +524,8 @@ grid.arrange(lasso, boost, faa, nrow=1, top="Figure 15: Comparison of Lasso, Boo
 ```
 
 In Figure 15 we can see the results from both the lasso approach and boosting. The MSE and RMSE for boosting is lower than it is for Lasso. Additionally it includes 10 variables while Lasso has 19. The approaches do not seem to evaluate the variables the same way, the only one that seems consistantly influential is the sales year. 
+
+  Boosting evaluated square meter as the most influential variable. Lasso did not null it out but was second lowest of the remaining variables. That variable had the highest correlation to the first dimension obtained by the factor analysis. From this we might assume that square meter is influential regarding property worth, but as an confounding variable. Which is Lasso's weakpoint. 
 
 ## Part III: Predicting whether a property is old or new
 
