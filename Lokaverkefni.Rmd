@@ -602,7 +602,6 @@ detach("package:MASS", unload=TRUE)
 
 The test error rate of the LDA model is  `r meanLOG`, meaning the model predicted incorrectly nearly  `r meanLOGperc` of the time. Similar result to that of QDA.   
 
-<<<<<<< HEAD
 ```{r}
 old <- data.frame(QDA = c(paste0(round(sum(diag(kabletable))/sum(kabletable)*100),"%"),
                           paste0(round(prop.table(kabletable)*100),"%")),
@@ -617,8 +616,6 @@ old %>%
 
 In table 4 we see a comparison of the results between QDA and logistic regression. The two methods have very similar results, although the percentage of false negatives is slightly (still noticably) higher for QDA. 
 
-=======
->>>>>>> 4facd199d847f8e18c3bbcdadc577b1b1a224987
 #### Random forests
 
 ```{r fig.align='center'}
