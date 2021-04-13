@@ -2,11 +2,13 @@
 title: "Lokaverkefni nafn hér"
 author: "Bergrós Skúladóttir, Indriði Arnaldsson & Íris Aníta Eyþórsdóttir"
 output:
-  prettydoc::html_pretty:
-    theme : hpstr
-    highlight: github
-    toc: true
-    toc_depth: 2
+    rmdformats::downcute:
+      self_contained: true
+      thumbnails: true
+      lightbox: true
+      gallery: false
+      highlight: tango
+  
 ---
 
 ```{r setup, include=FALSE}
@@ -195,7 +197,7 @@ data_fjolbylishus %>%
 
 Figure 4 shows the average apartment worth, in each municipality, based on whether there is an elevator or not. Apartments in buildings with an elevator are on average worth more. The percentages on the plot represent the increase in worth for having an elevator in the building. Seltjarnarnes is the only municipality where having an elevator does not increase the apartments' worth.  
 
-```{r, fig.align = 'right'}
+```{r, fig.align = 'center'}
 # verð út frá aldri byggingar og tegund húsnæðis.
 f3 <- data %>% 
   mutate(ibteg=ifelse(data$ibteg == 1, "Single-family house", "Apartment building"))
@@ -296,7 +298,7 @@ library(factoextra)
 
 Factor analysis on the data set as a whole obtained 25 dimensions all with eigenvalues higher than one, indicating that the dimension accounts for more variance than one of the original variables. These 25 dimensions only collectively explained around 66% of data variance. Neighbourhood had no correlation to any dimensions so it will be removed for further analysis, as will worth per square meter since it had high correlation to other predictors. 
 
-```{r}
+```{r fig.align = 'center'}
 res.famd <- FAMD(blabb,
                  sup.var=blabb$nuvirdi,
                  graph=F,
@@ -496,7 +498,7 @@ knitr::include_graphics("https://i.imgur.com/1UVpsKy.png")
 ```
 In figure 14 we see a plot of the RMSE via cross-validation according to various measures of tree size and shrinkage value. We can see here that using 500 boosting iterations, with $\lambda$ of 0.1 and a max tree depth of 10 results in the lowest RMSE out of all the tree combinations that were created. 
 
-```{r}
+```{r fig.align = 'center'}
 library(vip)
 NewBoost.predict <- predict(gbm_tree_final, newdata = test.set)
 
@@ -627,7 +629,7 @@ In table 4 we see a comparison of the results between QDA and logistic regressio
 
 #### Random forests
 
-```{r}
+```{r fig.align = 'center'}
 # randforr_MSE <- rep(NA,ncol(train.set2)-1)
 # #þessi skipun tekur um 10 min að keyra í minni tölvu. 
 # 
@@ -657,7 +659,7 @@ points(best.CV, randforr_list_MSE[best.CV], col = "darkred", pch = 20,cex =30)
 
 
 Using random Forest with the optimal mtry variable which is `r best.CV`.
-```{r}
+```{r fig.align = 'center'}
 #library(rpart)   # tveir tree plot pakkar 
 #library(visreg)  # Sjáum hvort það sé tími til að nota þá. 
 randforr_best <- randomForest(AgeNew~.,data=train.set2,mtry=best.CV,importance=T,ntree=500)
@@ -686,7 +688,7 @@ TODO útskýra betur og bera saman við niðurstöðurnar frá QDA og LDA.
 
 
 #### Bonus
-```{r}
+```{r fig.align = 'center'}
 bonusdataserbyli <- read.csv("https://raw.githubusercontent.com/IndridiArn/Final-Project-HGG-/main/bonusdataserbyli.csv")
 bonusdatafjolbyli <- read.csv("https://github.com/IndridiArn/Final-Project-HGG-/blob/main/bonusdataserbyli.csv")
 sam <- names(bonusdatafjolbyli)[names(bonusdatafjolbyli) %in% names(bonusdataserbyli)]
