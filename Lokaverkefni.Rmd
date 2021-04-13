@@ -519,8 +519,6 @@ BOOST.test.MSE <- round(mean((NewBoost.predict - test.set$nuvirdi)^2), 2)
 rmse.boost <- sqrt(BOOST.test.MSE)
 ```
 
-LAGA: vantar nöfn á ásana. Mikið vesen. Hvernig best að gera? 
-
 As shown in figure 15, there are three variables that have higher relative importance. They are square meters of property, the year the property was bought and the age of the property. Square meters per property is by far the most important variable. In figures 5 and 8 in the exploratory analysis we learned that the more square meters are in a property the more it is worth and that property worth increases the younger the property is. 
 
 
