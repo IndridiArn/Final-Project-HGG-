@@ -282,7 +282,7 @@ library(factoextra)
 #corrplot(lkj1)
 ```
 
-Factor analysis on the data set as a whole obtained 25 dimensions all with eigenvalues higher than one, indicating that the dimension accounts for more variance than one of the original variables. These 25 dimensions only collectively explained around 66% of data variance. Neighbourhood had no correlation to any dimensions so it will be removed for further analysis. 
+  First we obtained 25 dimensions from the factor analysis that collectively explained around 66% of data variance. Neighbourhood had no correlation to any of the dimensions so it will be removed for further analysis. 
 
 ```{r fig.align = 'center'}
 res.famd <- FAMD(blabb,
