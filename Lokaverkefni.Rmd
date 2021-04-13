@@ -255,7 +255,7 @@ data7 %>%
   annotate(geom="text", y=1000, x="Mosfellsbaer", label=fjolbyli.perc[7], col="black")
 ```
 
-Figure 7 shows the split of property types for each municipality. The plot shows the percentage of apartment buildings.   
+Figure 7 shows the split of property types for each municipality. The plot shows the percentage of apartment buildings. The highest ratio of apartments to single-family houses is in Reykjavík and Kópavogur. 
 
 ```{r}
 #Corrplot allar numeric breytur
@@ -269,7 +269,7 @@ corrplot.mixed(cor(da), lower.col = "#d88121", number.cex=0.7, tl.pos = "lt", up
 
 Figure 8 shows correlation of all numeric (14) property elements of the dataset. Property worth has a moderately strong positive correlation with the size of properties (in square meters), year of sale and number of rooms, living rooms, floors, showers and toilets in a property. 
 
-The last five attributes mentioned here above also appear to have a moderately strong postive relationship with each other. 
+The last five elements mentioned here above also appear to have a moderately strong postive relationship with each other. 
 
 ## Part II: Predicting property worth
 
@@ -287,7 +287,7 @@ library(factoextra)
 #corrplot(lkj1)
 ```
 
-Factor analysis on the data set as a whole obtained 25 dimensions all with eigenvalues higher than one, indicating that the dimension accounts for more variance than one of the original variables. These 25 dimensions only collectively explained around 66% of data variance. Neighbourhood had no correlation to any dimensions so it will be removed for further analysis, as will worth per square meter since it had high correlation to other predictors. 
+Factor analysis on the data set as a whole obtained 25 dimensions all with eigenvalues higher than one, indicating that the dimension accounts for more variance than one of the original variables. These 25 dimensions only collectively explained around 66% of data variance. Neighbourhood had no correlation to any dimensions so it will be removed for further analysis, as will worth per square meter since it has a high correlation to other predictors. 
 
 ```{r}
 res.famd <- FAMD(blabb,
@@ -353,9 +353,9 @@ corrplot(lkj)
 
 LAGA: næ ekki að gera þessa mynd fína!
 
-  Here we can see how the variables influence each dimension. This suggests splitting municipality, which aligns with previous information (see Figure 10). Additionally it seems like the number of showers and baths a property has might work together, perhaps as number of master bathrooms. Sales year seems like a strong variable on it's own. 
+  Here we can see how the variables influence each dimension. The plot indicates that we should look at each municipality seperately and aligns with previously seen information (see Figure 10). Additionally, it seems like the number of showers and baths a property has might work together, perhaps as number of master bathrooms. Sales year seems like a strong variable on it's own. 
   
-  Only the first seven dimensions had eigenvalues above one. Therefore we might assume that splitting municipality would only make two of it's regions strong predictors. All variables included in the first dimension, except for property pricing and property type, might work as a unit as property size.
+  Only the first seven dimensions had eigenvalues above one. Therefore we might assume that splitting the municipality variable into its factors would only make two of it's factors strong predictors. All variables included in the first dimension, except for property pricing and property type, might indicate a single factor belonging to property size.
 
 #### The lasso
 
@@ -389,7 +389,8 @@ data.frame(lambda = lasso.cv$lambda,
   annotate(geom="text",y=10^(0.03+log10(bestmse)), x=10^log10(bestlam), label= expression(paste(lambda, "=0.36")))
 ```
 
-Figure 11 shows the test MSE for a range of $\lambda$ values via cross-validation. Where it was optimal at `r round(bestlam,2)`. 
+Figure 11 shows the test MSE for a range of $\lambda$ values via cross-validation. Where it was optimal at `r round(bestlam,2)`.
+LAGA LAMBDA GILDI Í TÖFLU
 
 ```{r, fig.align = 'center'}
 library(reshape2)
@@ -417,7 +418,7 @@ haha %>%
   geom_point(show.legend = F, size = 3)+ 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         panel.background = element_blank()) + 
-  scale_color_manual(values=sample(ColorsDT$Color)) + labs(x="Coefficient", y=" ") + ggtitle(expression(paste("Figure 9: Predictors with non-zero Lasso coefficients with ", lambda, " = 0.36")))
+  scale_color_manual(values=sample(ColorsDT$Color)) + labs(x="Coefficient", y=" ") + ggtitle(expression(paste("Figure 12: Predictors with non-zero Lasso coefficients with ", lambda, " = 0.36")))
 
 test <- blabb[-train,]
 lasso.pred <- predict(lasso.mod, s=bestlam, newx=x[train,])
@@ -430,13 +431,13 @@ r2.lasso <- percent(1-mean((lasso.pred.[,1]-test$nuvirdi)^2)/mean((mean(test$nuv
 r2train.lasso <- percent(lasso.mod$dev.ratio)
 ```
 
-  Figure 12 shows the `r nrow(haha)` predictors that Lasso deemed influental regarding property worth. The bottom seven variables have a negative relationship with property worth while the remaining have a positive relationship.  
+  Figure 12 shows the `r nrow(haha)` predictors that Lasso deemed influental regarding property worth. The bottom seven variables have a negative relationship with property worth while the remaining have a positive relationship. The variables Seltjarnarnes, number of floors, year the property was bought, Garðabær, Hafnarfjörður and number of garages are the most influential according to the lasso.   
 
   The model explained around `r r2.lasso` of property worth variance ($R^2$). With training error around `r lasso.trainmse` m.ISK and test error around `r lassomse.` m.ISK. 
 
-  In alignment with the factor analysis, the municipality regions do seem influential for property worth as seperate predictors. Additionally, number of toilets and bathtubs seem to have similar effect on property pricing and might be considered as a singular predictor as noted earlier.
+  In alignment with the factor analysis, the municipality regions do seem influential for property worth as seperate predictors. Additionally, number of toilets and bathtubs seem to have similar effect on property worth and might be considered as a singular predictor as noted earlier.
   
-  The main issue with Lasso are correlated/confounding variables. As seen earlier (see Figure 10) square meter explained the second most data variance. Here we see that variable is included but rather low, however all the variables from the first dimension of the factor analysis are also included here. Since Lasso is blind to their influence on each other it is important to keep that in mind and not exclude the effect that square meter might have on property worth. 
+  The main issue with Lasso are correlated/confounding variables. As seen earlier (see Figure 10) square meters (size of property) came in second when it comes to explaining variance in the data. In figure 12 this variable (size) is included but its coefficient has been reduced almost to zero. Meanwhile, all the variables from the first dimension of the factor analysis appear to also be included here. Lasso is blind to the influence of square meter on property worth (due to high correlation) and it is important to keep that in mind and not exclude the effect that square meter has on property worth. 
   
 ```{r, fig.align = 'center'}
 gaga <- cbind(lasso.pred,y)
@@ -456,11 +457,11 @@ g2 <- gaga %>%
         geom_abline(slope=1,intercept = 0,lty=2, col= "#302016") +
 scale_x_continuous(labels = label_number(suffix = " m.ISK"), limits=c(0,150),breaks = seq(0,150, by=50)) +
   scale_y_continuous(labels = label_number(suffix = " m.ISK"))
-grid.arrange(g2,g1, nrow=1,top="Figure 10: Lasso predicted versus observed property worths", bottom="Predicted", left="Observed")
+grid.arrange(g2,g1, nrow=1,top="Figure 13: Lasso predicted versus observed property worths", bottom="Predicted", left="Observed")
 ```
 
-In Figure 13 we see the relationship between lasso´s predicted values and observed values. The right graph includes all values in the data set and we appear to have an extreme value at the top of the plot. 
-  The left graph is a close-up of all the values excluding the extreme value. The relationship seems stronger for lower worthd properties but starts to gradually worsen as the worth goes up.
+In Figure 13 we see the relationship between lassos' predicted values and observed values. The right graph includes all values in the data set and we appear to have an extreme value at the top of the plot. 
+  The left graph is a close-up of all the values excluding the extreme value. The relationship seems stronger for properties of lower worth but starts to gradually worsen as the worth goes up.
 
 #### Boosting
 
@@ -490,7 +491,7 @@ Tuning the parameters resulted in a model with 500 boosting iterations (n.trees 
 ```{r fig.align='center'}
 knitr::include_graphics("https://i.imgur.com/1UVpsKy.png")
 ```
-In figure 14 we see a plot of the RMSE via cross-validation according to various measures of tree size and shrinkage value. We can see here that using 500 boosting iterations, with $\lambda$ of 0.1 and a max tree depth of 10 results in the lowest RMSE out of all the tree combinations that were created. 
+In figure 14 we see a plot of the RMSE via cross-validation according to various measures of tree size and shrinkage value. We can see here that using 500 boosting iterations, with $\lambda$ of 0.1 and a max tree depth of 10 results in the lowest RMSE out of all the tree combinations that were tested. 
 
 ```{r}
 library(vip)
