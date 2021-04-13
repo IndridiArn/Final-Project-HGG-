@@ -692,7 +692,7 @@ vip(randforr_best, aesthetics = list(fill = c("#d48149","#da9566","#ca6e2f","#ad
     mapping = aes_string(fill = "Variable")) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(),
         plot.title = element_text(hjust = 0.5)) + 
-  ggtitle("Figure X: Relative influence of variables using boosting") + 
+  ggtitle("Figure X: Relative influence of variables using random forest") + 
   labs(x = " ", y = "Relative influence") 
 ```
 The results on figure X indicate that across all of the trees considered in the random forest, municipality is by far the most important variable when it comes to predicting the age of a property (old or new). Other important variables are number of garages, whether there is an elevator in the building and property worth. 
