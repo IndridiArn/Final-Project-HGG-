@@ -639,7 +639,7 @@ old %>%
   kable_styling(full_width = F) %>% 
  add_header_above(c("Table 4: Comparison of QDA and LR" = 3),bold=T,font_size = 16)
 ```
-TODO :Vantar túlkun hingað inn 
+In table 4 we see a comparison of the results between QDA and logistic regression. The two methods have very similar results, although the percentage of false negatives is slightly (still noticably) higher for QDA. 
 
 #### Bonus
 ```{r}
