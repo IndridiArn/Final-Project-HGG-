@@ -39,6 +39,7 @@ library(scales)
 library(tree)
 library(caret)
 library(Metrics)
+library(grid)
 ```
 
 ## Introduction 
@@ -72,6 +73,10 @@ data <- select(data, -kdagur, -byggar)
 data$matssvaedi <- recode_factor(data$matssvaedi, `11`="Rvk:Vesturbær", `20` = "Rvk:Miðbær", `25`="Rvk:Miðbær", `31`="Rvk:Miðbær", `70`="Rvk:Vesturbær", `72`="Rvk:Vesturbær", `75`="Rvk:Vesturbær", `80`="Rvk:Hlíðar", `85`="Rvk:Bústaðarhverfi", `90`="Rvk:Laugardalur", `91`="Rvk:Bústaðarhverfi", `100`="Rvk:Laugardalur", `110`="Rvk:Grafarvogur", `120`="Rvk:Grafarvogur", `130`="Rvk:Grafarvogur", `140`="Rvk:Grafarvogur", `150`="Rvk:Breiðholt", `160`="Rvk:Breiðholt", `161`="Rvk:Breiðholt", `170`="Rvk:Breiðholt", `180`="Rvk:Grafarholt", `181`="Rvk:Grafarholt", `200`="Rvk:Árbær", `210`="Rvk:Árbær", `220`="Rvk:Árbær", `270`="Rvk:Árbær", `280`="Rvk:Bústaðarhverfi", `281`="Rvk:Bústaðarhverfi", `282` ="Rvk:Bústaðarhverfi", `283`="Rvk:Bústaðarhverfi", `284`="Rvk:Bústaðarhverfi", `290`="Rvk:Kjalarnes",
                                  `300`="Kóp:Vesturbær",`320`="Kóp:Austurbær",`330`="Kóp:Smárar", `340`="Kóp:Lindir", `350`="Kóp:Hvörf",`351`="Kóp:Kórar",
                                  `400`="Seltjarnarnes", `500`="Grb:Miðbær", `510`="Grb:Ásar", `511`="Grb:Arnarnes", `520`="Grb:Sjáland", `530`="Grb:Hraunholt", `540`="Grb:Arnarnes", `550`="Grb:Urriðarholt", `560`="Grb:Flatir", `590`="Grb:Annað",`700`="Grb:Álftanes", `600`="Hfj:Miðbær", `620`="Hfj:Holt", `630`="Hfj:Vellir", `640`="Hfj:Ásland", `650`="Hfj:Setberg", `660`="Hfj:Flensborg", `670`="Hfj:Vellir", `680`="Hfj:Holt", `800`="Mos:Miðbær", `810`="Mos:Teigar", `820`="Mos:Leirvogstunga", `830`="Mos:Dalur", `840`="Mos:Hlíðar", `850`="Mos:Helgafell", `890`="Mos:Annað", `999`="Kóp:Annað")
+
+library(Hmisc)
+var.labels <- c(nuvirdi = "Property Worth", lyfta="Elevator", ibm2 = "Sqm", fjhaed = "Floors", fjbilsk = "Parking", fjbkar = "Bathtubs", fjsturt = "Showers", fjklos="Toilets", fjeld = "Kitchens", fjherb="Rooms", fjstof = "Living Rooms", fjgeym = "Storage", matssvaedi = "Neighbourhood", ibteg = "Prop. Type", svfn = "Municipality", yearkeypt = "Salesyear", age = "Age", fermetraverd = "Price per Sqm", svfnMosfellsbaer = "Mosfellsbær", svfnHafnarfjordur = "Hafnarfjörður", svfnSeltjarnarnes = "Seltjarnarnes", svfnGardabaer = "Garðabær", svfnKopavogur = "Kópavogur", ibteg1 = "Single-family property", ibteg0 = "Apartment", lyfta1 = "Elevator present", lyfta0 = "No elevator")
+var.labels2 <- c(nuvirdi = "Property Worth", lyfta="Elevator", ibm2 = "Sqm", fjhaed = "Floors", fjbilsk = "Parking", fjbkar = "Bathtubs", fjsturt = "Showers", fjklos="Toilets", fjeld = "Kitchens", fjherb="Rooms", fjstof = "Living Rooms", fjgeym = "Storage", matssvaedi = " ", ibteg = "Prop. Type", svfn = "Municipality", yearkeypt = "Salesyear", age = "Age", fermetraverd = "Price per Sqm", svfnMosfellsbaer = "Mosfellsbær", svfnHafnarfjordur = "Hafnarfjörður", svfnSeltjarnarnes = "Seltjarnarnes", svfnGardabaer = "Garðabær", svfnKopavogur = "Kópavogur", ibteg1 = "Single-family property", ibteg0 = "Apartment", lyfta1 = "Elevator present", lyfta0 = "No elevator")
 ```
 
 ## Part I: Exploratory Analysis
@@ -113,7 +118,7 @@ neigh <- data %>%
   summarise(mean = mean(nuvirdi))
 ```
 
-Figure 1 shows the distribution of property worth based on the municipality on one hand, and neighbourhood on the other. They are mostly right skewed. The highest average property worths are in Seltjarnarnes ($\mu approx$ 52 m.ISK), Garðabær ($\mu approx$ 49 m.ISK). The lowest in Hafnarfjörður ($\mu approx$ 35 m.ISK) and Reykjavík ($\mu approx$ 35 m.ISK). 
+Figure 1 shows the distribution of property worth based on the municipality on one hand, and neighbourhood on the other. They are mostly right skewed. The highest average property worths are in Seltjarnarnes ($\mu \approx$ 52 m.ISK), Garðabær ($\mu \approx$ 49 m.ISK). The lowest in Hafnarfjörður ($\mu \approx$ 35 m.ISK) and Reykjavík ($\mu \approx$ 35 m.ISK). 
 
   The distribution for Seltjarnarnes differs from the rest in both graphs. It is the only multimodal distribution compared to the other municipalities, and has a flatter curve compared to the other neighbourhoods. The property worths in the Flatir neighbourhood in Garðabær is the only left-skewed distribution.   
   
@@ -243,7 +248,8 @@ data7 %>%
   ggplot(aes(fill = ibteg, x = svfn,y=count)) + 
   geom_bar(stat= "identity", position = "dodge") +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        panel.background = element_blank(), legend.position = "top") + 
+        panel.background = element_blank(), legend.position = c(0.7,0.7) ,
+      legend.direction = "horizontal") + 
   ggtitle("Figure 7: Property type by municipality") +
   scale_fill_manual(name = "Property type", values=sample(ColorsDT$Color)) + 
   labs(x = " ", y = "Total") + ylim(0, 17000) + 
@@ -261,8 +267,7 @@ Figure 7 shows the split of property types for each municipality. The plot shows
 #Corrplot allar numeric breytur
 da <- data %>%
   dplyr::select(where(is.numeric))
-
-colnames(da) <- c("Pr.worth","Sqm","Floors","Parking","Baths","Showers","Toilets","Kitchens","Rooms","Liv.r.", "Storage","Sale.Year", "Age", "Sqm.worth")
+colnames(da) <- as.list(var.labels[match(names(da),names(var.labels))])
 par(xpd=TRUE)
 corrplot.mixed(cor(da), lower.col = "#d88121", number.cex=0.7, tl.pos = "lt", upper.col = "#8c5e4a", tl.col="#341e12", tl.cex=0.7, tl.srt = 45, title = "Figure 8: Correlation plot of property elements", mar=c(0,0,4,0))
 ```
@@ -275,7 +280,6 @@ The last five attributes mentioned here above also appear to have a moderately s
 
 In this part we will predict sale worths using the lasso and boosting methods. 
 We will start by doing a factor analysis of the dataset to get a better idea of its nature. 
-
 ```{r}
 set.seed(4)
 blabb <- data %>% select(-matssvaedi, -fermetraverd)
@@ -338,24 +342,9 @@ ba %>%
            label= paste(round(ba$cumulative.variance.percent[7]),"%"), col="#a36e56") 
 ```
 
-  Figure 9 shows the relative and cumulative variance explained by the factor analysis dimensions. Removing the two variables reduced the dimensions from 25 to seven and only decreased the cumulative variance explained by around 2%. 
-
-```{r fig.align = 'center'}
-fviz_contrib(res.famd, choice="var", axes=1:7) + ggtitle("Figure 10: Variable contribution")
-```
-
-  Figure 10 shows how much data variability the variables explain. Clearly, municipality explains the most variability compared to the other variables.
-
-```{r fig.align = 'center'}
-lkj <- get_famd_var(res.famd)$cos2
-corrplot(lkj)
-```
-
-LAGA: næ ekki að gera þessa mynd fína!
-
-  Here we can see how the variables influence each dimension. This suggests splitting municipality, which aligns with previous information (see Figure 10). Additionally it seems like the number of showers and baths a property has might work together, perhaps as number of master bathrooms. Sales year seems like a strong variable on it's own. 
+  Figure 9 shows the relative and cumulative variance explained by the factor analysis dimensions. Removing the two variables reduced the dimensions from 25 to seven and only decreased the cumulative variance explained by around 2%. According to the factor analysis the most influential variables are municipality, sqm, sales year, property worth, and number of bathtubs. 
   
-  Only the first seven dimensions had eigenvalues above one. Therefore we might assume that splitting municipality would only make two of it's regions strong predictors. All variables included in the first dimension, except for property pricing and property type, might work as a unit as property size.
+  The first dimension consisted of property worth, sqm, floors, toilets, rooms, living rooms, and property type (where sqm is clearly most influental), together they might be representing property size. The second consisted of age, parking, and elevator status. The third consists of number of bathtubs and showers, together might represent the number of master bathrooms. Sales year and storage have it's own dimension. The factor analysis showed that municipality had substantially higher contribution rate compared to the other variables and works as multiple seperate dimensions, two of which are included in the seven dimensions. 
 
 #### The lasso
 
@@ -385,11 +374,11 @@ data.frame(lambda = lasso.cv$lambda,
   scale_color_identity() + xlab( expression(lambda)) + ylab("Cross-Validation MSE") +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         panel.background = element_blank(), legend.position = "none", plot.title = element_text(hjust = 0.5)) + 
-  ggtitle("Figure 11: Lasso Cross-Validation") + 
+  ggtitle("Figure 10: Lasso Cross-Validation") + 
   annotate(geom="text",y=10^(0.03+log10(bestmse)), x=10^log10(bestlam), label= expression(paste(lambda, "=0.36")))
 ```
 
-Figure 11 shows the test MSE for a range of $\lambda$ values via cross-validation. Where it was optimal at `r round(bestlam,2)`. 
+Figure 10 shows the test MSE for a range of $\lambda$ values via cross-validation. Where it was optimal at `r round(bestlam,2)`. 
 
 ```{r, fig.align = 'center'}
 library(reshape2)
@@ -410,14 +399,23 @@ haha <- plot[-1,] %>%
   mutate(Value = abs(value)) %>% 
   filter(Value>0) %>%
   arrange(-Value)
-haha$names <- c("Seltjarnarnes", "Hafnarfjörður", "Garage", "Floor", "Year Bought", "Property type", "Garðabær","Bathrooms", "Mosfellsbær", "Showers", "Elevator", "Kitchens","Bathtubs","Rooms","Living rooms","Kópavogur","Storage rooms","Size","Age") #keyra coef(lasso.mod) til að sjá hvaða rownames eiga að vera hér
+haha <- data.frame(t(haha))
+library(janitor)
+haha <- haha %>% row_to_names(row_number=1)
+colnames(haha) <- as.list(var.labels[match(names(haha), names(var.labels))])
+haha <- t(haha)
+haha <- data.frame(haha)
+
 haha %>%
-  ggplot(aes(value,reorder(names,value),
-             col = ifelse(value>=0, "#a36e56","#493021"))) + 
-  geom_point(show.legend = F, size = 3)+ 
+  mutate(Value = as.numeric(Value),
+         value = as.numeric(value),
+         col = ifelse(value>=0, "Positive", "Negative")) %>%
+  ggplot(aes(Value, reorder(rownames(haha),Value),
+             col = col)) +
+  geom_point(size = 3)+ 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        panel.background = element_blank()) + 
-  scale_color_manual(values=sample(ColorsDT$Color)) + labs(x="Coefficient", y=" ") + ggtitle(expression(paste("Figure 9: Predictors with non-zero Lasso coefficients with ", lambda, " = 0.36")))
+        panel.background = element_blank(), legend.position = "top") + 
+  scale_color_manual(values=sample(ColorsDT$Color)) + labs(x="Coefficient", y=" ", col="Relationship with property worth:") + ggtitle(expression(paste("Figure 9: Predictors with non-zero Lasso coefficients with ", lambda, " = 0.36")))
 
 test <- blabb[-train,]
 lasso.pred <- predict(lasso.mod, s=bestlam, newx=x[train,])
@@ -467,8 +465,8 @@ In Figure 13 we see the relationship between lasso´s predicted values and obser
 
 ```{r}
 set.seed(1)
-
-datam <- data %>% select(-matssvaedi, - fermetraverd)
+datam <- data %>% select(-matssvaedi, -fermetraverd)
+colnames(datam) <- as.list(var.labels2[match(names(datam), names(var.labels2))])
 TRAIN <- sample(1:nrow(datam), nrow(datam)*0.7)
 train.set <- datam[TRAIN,]
 test.set <- datam[-TRAIN,]
@@ -477,12 +475,13 @@ trainctrl <- trainControl(method = "repeatedcv", number = 5)
 
 myBestGrid2 <- data.frame("n.trees" = 500,"interaction.depth"= 10,"shrinkage"=0.1,"n.minobsinnode"=10)
 
-gbm_tree_final <- train(nuvirdi ~ ., data = train.set, 
+gbm_tree_final <- train(`Property Worth` ~ ., data = train.set, 
                         method="gbm", 
                         distribution = "gaussian", 
                         trControl = trainctrl, 
                         verbose = FALSE, 
                         tuneGrid = myBestGrid2)
+
 ```
 We ran cross-validation on multiple combinations of trees. 
 Tuning the parameters resulted in a model with 500 boosting iterations (n.trees = 500), a max tree depth of ten (interaction depth = 10), and a $\lambda$ of 0.1. The minimum terminal node size was kept constant at 10. 
@@ -497,14 +496,13 @@ library(vip)
 NewBoost.predict <- predict(gbm_tree_final, newdata = test.set)
 
 #which variables are most important. 
-
 vip(gbm_tree_final, aesthetics = list(fill = c("#d48149","#da9566","#ca6e2f","#ad5e28","#e1a983","#e8bda0","#2e1f18",
                                       "#462f25","#5d3f31","#904e22")),
     mapping = aes_string(fill = "Variable")) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(),
         plot.title = element_text(hjust = 0.5)) + 
   ggtitle("Figure 15: Relative influence of variables using boosting") + 
-  labs(x = "Influential variables", y = "Relative influence") 
+  labs(x = " ", y = "Relative influence") 
 
 #What is the test MSE
 BOOST.test.MSE <- round(mean((NewBoost.predict - test.set$nuvirdi)^2), 2)
