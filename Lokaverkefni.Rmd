@@ -52,7 +52,6 @@ In this assignment we carry out an analysis of a dataset containing information 
 
 The original dataset was very high dimensional. Irrelevant variables and observations were excluded. Focus will be on data concerning single-family houses and apartment building located in the Capital Region of Iceland. The resulting dataset contains approximately 35 thousand observations and 17 variables regarding properties worth, municipality, age of construction, property type and property area among other.
 
-## Reading data and cleanup
 ```{r}
 data <- read_delim("https://www.skra.is/library/Samnyttar-skrar-/Fyrirtaeki-stofnanir/Fasteignamat-2019/gagnasafn_ib_2018.csv", ";", escape_double = FALSE, locale = locale(decimal_mark = ",", 
         grouping_mark = ".", encoding = "ISO-8859-1"), 
@@ -228,7 +227,7 @@ data %>%
 
 Figure 6 shows property worth per square meter by municipality. Worths per square meter are a bit higher for properties in Garðabær and Seltjarnarnes (and Mosfellsbær to a degree) than for properties in the other municipalities. 
 
-```{r}
+```{r, fig.align = 'center'}
 # fjölbýli vs einbýli eftir municipality. Figure 7
 data %>% 
     mutate(ibteg = ifelse(data$ibteg == 1, "Single-family house", "Apartment building"))%>%
@@ -252,7 +251,7 @@ data %>%
 
 Figure 7 shows the split of property types for each municipality. The plot shows the percentage of apartment buildings.   
 
-```{r}
+```{r, fig.align = 'center'}
 #Corrplot allar numeric breytur
 da <- data %>%
   dplyr::select(where(is.numeric))
@@ -268,7 +267,9 @@ The last five attributes mentioned here above also appear to have a moderately s
 ## Part II: Predicting property worth
 
 In this part we will predict sale worths using the lasso and boosting methods. 
-We will start by doing a factor analysis of the dataset to get a better idea of its nature. 
+We will start by doing a factor analysis of the dataset to get a better idea of its nature.
+
+#### Factor analysis
 ```{r}
 set.seed(4)
 blabb <- data %>% select(-matssvaedi, -fermetraverd)
@@ -383,7 +384,7 @@ vi(lasso.mod) %>% ggplot(aes(Importance, reorder(Variable,Importance),
   geom_bar(stat = "identity", position = "dodge")+ 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         panel.background = element_blank(), legend.direction = "horizontal", legend.position = c(0.7,0.7)) + 
-  scale_fill_manual(values=sample(ColorsDT$Color)) + labs(x="Beta coefficient", y=" ") + ggtitle(expression(paste("Figure 9: Predictors with non-zero Lasso coefficients with ", lambda, " = 0.36")))
+  scale_fill_manual(values=sample(ColorsDT$Color)) + labs(x="Beta coefficient", y=" ") + ggtitle(expression(paste("Figure 11: Predictors with non-zero Lasso coefficients with ", lambda, " = 0.36")))
 
 test <- blabb[-train,]
 lasso.pred <- predict(lasso.mod, s=bestlam, newx=x[train,])
@@ -394,11 +395,18 @@ lassomse. <- round(mean(lasso.pred.[,1])/1e3,2)
 r2.lasso <- percent(1-mean((lasso.pred.[,1]-test$Prop.Worth)^2)/mean((mean(test$Prop.Worth)-test$Prop.Worth)^2))
 #train R squared
 r2train.lasso <- percent(lasso.mod$dev.ratio)
+
+lasso.trainmseNew <- log10(round(mean(lasso.pred[,1]),2))
+lassomse.new <- log10(round(mean(lasso.pred.[,1]),2))
 ```
 
+<<<<<<< HEAD
   Figure 12 shows the `r nrow(vi(lasso.mod))` predictors that Lasso deemed influental regarding property worth. The bottom seven variables have a negative relationship with property worth while the remaining have a positive relationship.  
+=======
+  Figure 11 shows the `r nrow(vi(lasso.mod))` predictors that Lasso deemed influental regarding property worth. The bottom seven variables have a negative relationship with property worth while the remaining have a positive relationship.  
+>>>>>>> 3b6efba52334568edbabd3a026a1a8774a5e6fbd
 
-  The model explained around `r r2.lasso` of property worth variance ($R^2$). With training error around `r lasso.trainmse` m.ISK and test error around `r lassomse.` m.ISK. 
+  The model explained around `r r2.lasso` of property worth variance ($R^2$). With training error around `r lasso.trainmseNew` m.ISK and test error around `r lassomse.new` m.ISK. 
 
   In alignment with the factor analysis, the municipality regions do seem influential for property worth as seperate predictors. Additionally, number of toilets and bathtubs seem to have similar effect on property pricing and might be considered as a singular predictor as noted earlier.
   
@@ -422,10 +430,10 @@ g2 <- gaga %>%
         geom_abline(slope=1,intercept = 0,lty=2, col= "#302016") +
 scale_x_continuous(labels = label_number(suffix = " m.ISK"), limits=c(0,150),breaks = seq(0,150, by=50)) +
   scale_y_continuous(labels = label_number(suffix = " m.ISK"))
-grid.arrange(g2,g1, nrow=1,top="Figure 10: Lasso predicted versus observed property worths", bottom="Predicted", left="Observed")
+grid.arrange(g2,g1, nrow=1,top="Figure 12: Lasso predicted versus observed property worth", bottom="Predicted", left="Observed")
 ```
 
-In Figure 13 we see the relationship between lasso´s predicted values and observed values. The right graph includes all values in the data set and we appear to have an extreme value at the top of the plot. 
+In Figure 12 we see the relationship between lasso´s predicted values and observed values. The right graph includes all values in the data set and we appear to have an extreme value at the top of the plot. 
   The left graph is a close-up of all the values excluding the extreme value. The relationship seems stronger for lower worthd properties but starts to gradually worsen as the worth goes up.
 
 #### Boosting
@@ -455,9 +463,9 @@ We ran cross-validation on multiple combinations of trees.
 Tuning the parameters resulted in a model with 500 boosting iterations (n.trees = 500), a max tree depth of ten (interaction depth = 10), and a $\lambda$ of 0.1. The minimum terminal node size was kept constant at 10. 
 
 ```{r fig.align='center'}
-knitr::include_graphics("https://i.imgur.com/1UVpsKy.png")
+knitr::include_graphics("https://i.imgur.com/lOfx4DZ.png")
 ```
-In figure 14 we see a plot of the RMSE via cross-validation according to various measures of tree size and shrinkage value. We can see here that using 500 boosting iterations, with $\lambda$ of 0.1 and a max tree depth of 10 results in the lowest RMSE out of all the tree combinations that were created. 
+In figure 13 we see a plot of the RMSE via cross-validation according to various measures of tree size and shrinkage value. We can see here that using 500 boosting iterations, with $\lambda$ of 0.1 and a max tree depth of 10 results in the lowest RMSE out of all the tree combinations that were created. 
 
 ```{r fig.align = 'center'}
 NewBoost.predict <- predict(gbm_tree_final, newdata = test.set)
@@ -469,7 +477,7 @@ boost <- vip(gbm_tree_final, aesthetics = list(fill = c("#d48149","#da9566","#ca
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(),
         plot.title = element_text(hjust = 0.5)) + 
   labs(x = " ", y = "Relative influence") 
-boost + ggtitle("Figure 15: Relative influence of variables using boosting") 
+boost + ggtitle("Figure 14: Relative influence of variables using boosting") 
 
 #What is the test MSE
 BOOST.test.MSE <- log10(round(mean((NewBoost.predict - test.set$Prop.Worth)^2), 2))
@@ -479,9 +487,9 @@ BOOST.test.MSE <- log10(round(mean((NewBoost.predict - test.set$Prop.Worth)^2), 
 rmse.boost <- log10(sqrt(BOOST.test.MSE))
 ```
 
-As shown in figure 15, there are three variables that have higher relative importance. They are square meters of property, the year the property was bought and the age of the property. Square meters per property is by far the most important variable. In figures 5 and 8 in the exploratory analysis we learned that the more square meters are in a property the more it is worth and that property worth increases the younger the property is. 
+As shown in figure 14, there are three variables that have higher relative importance. They are square meters of property, the year the property was bought and the age of the property. Square meters per property is by far the most important variable. In figures 5 and 8 in the exploratory analysis we learned that the more square meters are in a property the more it is worth and that property worth increases the younger the property is. 
 
-```{r}
+```{r fig.align='center'}
 library(Metrics)
 
 lasso.testMSE <- log10(round((mean(lasso.pred.[,1])^2),2))
@@ -503,9 +511,12 @@ boost <- com %>% ggplot(aes(Importance.y,Variable)) +
   scale_fill_manual(values=sample(ColorsDT$Color)) + labs(x="Relative Influence", y=" ") + ggtitle("Boosting") + scale_y_discrete(labels=NULL) 
 
 grid.arrange(lasso, boost, nrow=1)
+```
 
-tafla <- data.frame(Boosting <- c(MSE=round(BOOST.test.MSE, 3),
-          RMSE=round(rmse.boost, 3),
+FIGURE 15 er nýja BOOST og LASSO SAMAN PLOTTIÐ
+```{r}
+tafla <- data.frame(Boosting <- c(MSE=round(BOOST.test.MSE, 2),
+          RMSE=round(rmse.boost, 2),
           Variables="10"),
           Lasso <- c(MSE=round(lasso.testMSE, 2),
            RMSE=round(lasso.RMSE, 2),
@@ -548,19 +559,15 @@ QDA.pred <- predict(QDA.fit, test.set2)
 kabletable <- table(QDA.pred$class,test.set2$AgeNew)
 rownames(kabletable) <- c("Old", "New")
 colnames(kabletable) <- c("Old","New")
-kbl(kabletable,booktabs=T) %>% 
+kbl(kabletable,booktabs=T, caption = "Table 2: Quadratic discrimnant analysis") %>% 
   kable_styling(full_width = F, position = "center") %>%
-  add_header_above(c(" ","True values" = 2),bold=T)  %>% 
-  add_header_above(c("Table 2: Quadratic discrimnant analysis" = 3),bold=T,font_size = 16)
+  add_header_above(c(" ","True values" = 2),bold=T) 
 
 meanQDA <- round(1-(mean(QDA.pred$class == test.set2$AgeNew)), 2)
 meanQDAperc <- percent(meanQDA)
 ```
 
-
-
 The test error rate of the LDA model is  `r meanQDA`, meaning the model predicted incorrectly nearly  `r meanQDAperc` of the time. 
-Umfjöllun hér um false positive og false negative rate (sjá glósur).
 
 #### Logistic regression 
 ```{r}
@@ -575,10 +582,9 @@ LOG.pred[LOG.prob > 0.5] <- 1 #define values as 1 (new property) if probs are ab
 kabletable2 <- table(LOG.pred, test.set2$AgeNew)
 rownames(kabletable2) <- c("Old", "New")
 colnames(kabletable2) <- c("Old", "New")
-kbl(kabletable2) %>% 
+kbl(kabletable2,booktabs=T, caption = "Table 3: Logistic Regression") %>% 
   kable_styling(full_width = F, position = "center") %>%
-  add_header_above(c(" " = 1, "True values" = 2)) %>% 
-  add_header_above(c("Table 3: Logistic Regression" = 3),bold=T,font_size = 16)
+  add_header_above(c(" " = 1, "True values" = 2))
   
 meanLOG <- round(1-(mean(LOG.pred == test.set2$AgeNew)), 2)
 meanLOGperc <- percent(meanLOG)
@@ -587,20 +593,6 @@ detach("package:MASS", unload=TRUE)
 ```
 
 The test error rate of the LDA model is  `r meanLOG`, meaning the model predicted incorrectly nearly  `r meanLOGperc` of the time. Similar result to that of QDA.   
-
-```{r}
-old <- data.frame(QDA = c(paste0(round(sum(diag(kabletable))/sum(kabletable)*100),"%"),
-                          paste0(round(prop.table(kabletable)*100),"%")),
-         LR =c(paste0(round(sum(diag(kabletable2))/sum(kabletable2)*100),"%"),
-               paste0(round(prop.table(kabletable2)*100),"%")),
-         row.names = c("Accuracy","True negatives", "False positives", "False negatives", "True positives"))
-old %>%
-  kable() %>%
-  kable_styling(full_width = F) %>% 
- add_header_above(c("Table 4: Comparison of QDA and LR" = 3),bold=T,font_size = 16)
-```
-
-In table 4 we see a comparison of the results between QDA and logistic regression. The two methods have very similar results, although the percentage of false negatives is slightly (still noticably) higher for QDA. 
 
 #### Random forests
 
@@ -677,29 +669,28 @@ The results on figure X indicate that across all of the trees considered in the 
 kabletableRF <- table(pred_randforr_best, test.set2$AgeNew)
 rownames(kabletableRF) <- c("Old", "New")
 colnames(kabletableRF) <- c("Old", "New")
-kbl(kabletableRF) %>% 
+kbl(kabletableRF,caption = "Table 4: Random Forest") %>% 
   kable_styling(full_width = F, position = "center") %>%
-  add_header_above(c(" " = 1, "True values" = 2)) %>% 
-  add_header_above(c("Table 4: Random forest " = 3),bold=T,font_size = 16)
+  add_header_above(c(" " = 1, "True values" = 2)) 
 
 randforr_MSE_best <- round(1-mean((pred_randforr_best==test.set2$AgeNew)),2)
 randforr_MSE_bestP <- percent(randforr_MSE_best)
 ```
 The test error rate of the LDA model is  `r randforr_MSE_best`, meaning the model predicted incorrectly nearly  `r randforr_MSE_bestP` of the time. 
 
-Setja random forest í töfluna með boosting, lda og qda
 ```{r}
 old <- data.frame(QDA = c(paste0(round(sum(diag(kabletable))/sum(kabletable)*100),"%"),
                           paste0(round(prop.table(kabletable)*100),"%")),
          LR =c(paste0(round(sum(diag(kabletable2))/sum(kabletable2)*100),"%"),
                paste0(round(prop.table(kabletable2)*100),"%")),
+         RF = c(paste0(round(sum(diag(kabletableRF))/sum(kabletableRF)*100), "%"), 
+                paste0(round(prop.table(kabletableRF)*100), "%")),
          row.names = c("Accuracy","True negatives", "False positives", "False negatives", "True positives"))
 old %>%
-  kable() %>%
-  kable_styling(full_width = F) %>% 
- add_header_above(c("Table 4: Comparison of QDA, LR and Random forest" = 3),bold=T,font_size = 16)
+  kable(caption = "Table 5: Comparison of QDA, LR and Random forest") %>%
+  kable_styling(full_width = F)
 ```
-LAGA TÚLKUN: In table 4 we see a comparison of the results between QDA, logistic regression and random forest. The two methods have very similar results, although the percentage of false negatives is slightly (but still noticably) higher for QDA. 
+In table 5 we see a comparison of the results between QDA, logistic regression and random forest. Overall, random forest outperforms QDA and logistic regression with the highest percentage of accuracy, true negatives and true positives. QDA and logistic regression have very similar results, although the percentage of false negatives is slightly (but still noticably) higher for QDA.
 
 
 #### Bonus
