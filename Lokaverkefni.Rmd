@@ -340,13 +340,13 @@ ba %>%
 
   Figure 9 shows the relative and cumulative variance explained by the factor analysis dimensions. Removing the two variables reduced the dimensions from 25 to seven and only decreased the cumulative variance explained by around 2%. 
 
-```{r}
+```{r fig.align = 'center'}
 fviz_contrib(res.famd, choice="var", axes=1:7) + ggtitle("Figure 10: Variable contribution")
 ```
 
   Figure 10 shows how much data variability the variables explain. Clearly, municipality explains the most variability compared to the other variables.
 
-```{r}
+```{r fig.align = 'center'}
 lkj <- get_famd_var(res.famd)$cos2
 corrplot(lkj)
 ```
