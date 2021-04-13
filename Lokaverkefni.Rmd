@@ -271,7 +271,7 @@ Figure 8 shows correlation of all numeric (14) property elements of the dataset.
 
 The last five attributes mentioned here above also appear to have a moderately strong postive relationship with each other. 
 
-## Part II: Predicting sale worths 
+## Part II: Predicting property worth
 
 In this part we will predict sale worths using the lasso and boosting methods. 
 We will start by doing a factor analysis of the dataset to get a better idea of its nature. 
@@ -558,7 +558,7 @@ LAGA: fjölda variables í töflunni!
 In table 1 we can see the results from both the lasso approach and boosting. The MSE and RMSE for boosting is lower than it is for 
 
 
-## Part II
+## Part III: Predicting whether a property is old or new
 
 Here we will predict whether a property is old or new. We've created a new binary variable: If the property age exceeds the overall median age (32 years) it is categorised as an old property, and the remaining as new properties. 
 
