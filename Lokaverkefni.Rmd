@@ -1,5 +1,5 @@
 ---
-title: "Lokaverkefni nafn hér"
+title: "Linear times at Ridgemont high"
 author: "Bergrós Skúladóttir, Indriði Arnaldsson & Íris Aníta Eyþórsdóttir"
 output:
     rmdformats::downcute:
