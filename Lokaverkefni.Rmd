@@ -711,8 +711,19 @@ bonus$year <- as.numeric(bonus$year)
 bonus <- bonus %>%
   filter(bonus$year>2018)
 bonus <- bonus %>% select(nuvirdi, ibm2,fjbilsk,age_studull, year, hverfi)
-var.labels <- c(nuvirdi = "Prop.Worth", ibm2 = "Sqm", fjbilsk = "Parking", age_studull = "Age", bath_fixtures = "Bathrooms", year = "Salesyear", hverfi = "Neighbourhood")
+var.labels <- c(nuvirdi = "Prop.Worth", ibm2 = "Sqm", fjbilsk = "Parking", age_studull = "Age", year = "Salesyear", hverfi = "Neighbourhood")
 colnames(bonus) <- as.list(var.labels[match(names(bonus), names(var.labels))])
+```
+
+```{r}
+set.seed(1)
+datam <- data %>% select(Prop.Worth,Sqm,Parking,Age,Salesyear,Neighbourhood)
+gbm_tree_final <- train(Prop.Worth ~ ., data = datam, 
+                        method="gbm", 
+                        distribution = "gaussian", 
+                        trControl = trainctrl, 
+                        verbose = FALSE, 
+                        tuneGrid = myBestGrid2)
 ```
 
 ```{r}
@@ -725,7 +736,7 @@ boost <- vip(gbm_tree_final, aesthetics = list(fill = c("#d48149","#da9566","#ca
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(),
         plot.title = element_text(hjust = 0.5)) + 
   labs(x = " ", y = "Relative influence") 
-boost + ggtitle("Figure 14: Relative influence of variables using boosting") 
+boost + ggtitle("Figure 18: Relative influence of variables using boosting") 
 
 #What is the test MSE
 BOOST.test.MSE <- log10(round(mean((NewBoost.predict - test.set$Prop.Worth)^2), 2))
