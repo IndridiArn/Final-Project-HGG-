@@ -508,11 +508,11 @@ vip(gbm_tree_final, aesthetics = list(fill = c("#d48149","#da9566","#ca6e2f","#a
   labs(x = "Influential variables", y = "Relative influence") 
 
 #What is the test MSE
-BOOST.test.MSE <- round(mean((NewBoost.predict - test.set$nuvirdi)^2), 2)
+BOOST.test.MSE <- log10(round(mean((NewBoost.predict - test.set$nuvirdi)^2), 2))
 
 # Reiknað út RMSE
 
-rmse.boost <- sqrt(BOOST.test.MSE)
+rmse.boost <- log10(sqrt(BOOST.test.MSE))
 ```
 
 LAGA: vantar nöfn á ásana. Mikið vesen. Hvernig best að gera? 
