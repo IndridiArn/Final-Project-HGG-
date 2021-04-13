@@ -76,7 +76,8 @@ data$matssvaedi <- recode_factor(data$matssvaedi, `11`="Rvk:Vesturbær", `20` = 
 
 library(Hmisc)
 var.labels <- c(nuvirdi = "Property Worth", lyfta="Elevator", ibm2 = "Sqm", fjhaed = "Floors", fjbilsk = "Parking", fjbkar = "Bathtubs", fjsturt = "Showers", fjklos="Toilets", fjeld = "Kitchens", fjherb="Rooms", fjstof = "Living Rooms", fjgeym = "Storage", matssvaedi = "Neighbourhood", ibteg = "Prop. Type", svfn = "Municipality", yearkeypt = "Salesyear", age = "Age", fermetraverd = "Price per Sqm", svfnMosfellsbaer = "Mosfellsbær", svfnHafnarfjordur = "Hafnarfjörður", svfnSeltjarnarnes = "Seltjarnarnes", svfnGardabaer = "Garðabær", svfnKopavogur = "Kópavogur", ibteg1 = "Single-family property", ibteg0 = "Apartment", lyfta1 = "Elevator present", lyfta0 = "No elevator")
-var.labels2 <- c(nuvirdi = "Property Worth", lyfta="Elevator", ibm2 = "Sqm", fjhaed = "Floors", fjbilsk = "Parking", fjbkar = "Bathtubs", fjsturt = "Showers", fjklos="Toilets", fjeld = "Kitchens", fjherb="Rooms", fjstof = "Living Rooms", fjgeym = "Storage", matssvaedi = " ", ibteg = "Prop. Type", svfn = "Municipality", yearkeypt = "Salesyear", age = "Age", fermetraverd = "Price per Sqm", svfnMosfellsbaer = "Mosfellsbær", svfnHafnarfjordur = "Hafnarfjörður", svfnSeltjarnarnes = "Seltjarnarnes", svfnGardabaer = "Garðabær", svfnKopavogur = "Kópavogur", ibteg1 = "Single-family property", ibteg0 = "Apartment", lyfta1 = "Elevator present", lyfta0 = "No elevator")
+
+var.labels2 <- c(nuvirdi = "Property Worth", lyfta="Elevator", ibm2 = "Sqm", fjhaed = "Floors", fjbilsk = "Parking", fjbkar = "Bathtubs", fjsturt = "Showers", fjklos="Toilets", fjeld = "Kitchens", fjherb="Rooms", fjstof = "Living Rooms", fjgeym = "Storage", matssvaedi = "Neighbourhood", ibteg = "Prop. Type", svfn = " ", yearkeypt = "Salesyear", age = "Age", fermetraverd = "Price per Sqm", svfnMosfellsbaer = "Mosfellsbær", svfnHafnarfjordur = "Hafnarfjörður", svfnSeltjarnarnes = "Seltjarnarnes", svfnGardabaer = "Garðabær", svfnKopavogur = "Kópavogur", ibteg1 = "Single-family property", ibteg0 = "Apartment", lyfta1 = "Elevator present", lyfta0 = "No elevator")
 ```
 
 ## Part I: Exploratory Analysis
@@ -461,7 +462,6 @@ In Figure 13 we see the relationship between lasso´s predicted values and obser
   The left graph is a close-up of all the values excluding the extreme value. The relationship seems stronger for lower worthd properties but starts to gradually worsen as the worth goes up.
 
 #### Boosting
-
 
 ```{r}
 set.seed(1)
