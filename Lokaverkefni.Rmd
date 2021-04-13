@@ -764,34 +764,17 @@ gbm_tree_final <- train(Prop.Worth ~ ., data = train.set,
                        verbose=FALSE,
                        tuneGrid=myBestGrid2)
 
-
 ```
 
-
-
 ```{r}
-
 NewBoost.predict <- predict(gbm_tree_final, newdata = bonus)
-
-#which variables are most important. 
-boost2 <- vip(gbm_tree_final, aesthetics = list(fill = c("#d48149","#da9566","#ca6e2f","#ad5e28")),
-    mapping = aes_string(fill = "Variable")) + 
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(),
-        plot.title = element_text(hjust = 0.5)) + 
-  labs(x = " ", y = "Relative influence") 
-boost2 + ggtitle("Figure 18: Relative influence of variables using boosting") 
-
 #What is the test MSE
 BOOST.test.MSE <- log10(round(mean((NewBoost.predict - test.set$Prop.Worth)^2), 2))
-
 # Reiknað út RMSE
-
 rmse.boost <- log10(sqrt(BOOST.test.MSE))
 ```
 
 We ran cross-validation on multiple combinations of trees (using the old data set) using only the variables that overlapped in both data sets. Tuning the parameters resulted in a model with 100 boosting iterations (n.trees = 100), a max tree depth of five (interaction depth = 5), and a λ of 0.125. The minimum terminal node size was kept constant at 10.
-
-As shown in figure 18, there are three variables out of the four that have higher relative importance. They are square meters of property, the year the property was bought and the age of the property. Square meters per property is by far the most important variable, which aligns with the results from before. 
 
 ```{r}
 boost22 <- vi(gbm_tree_final)
@@ -811,9 +794,9 @@ boostfyrri <- booooo %>% ggplot(aes(Importance.x,Variable,
         axis.text.y=element_blank(),
         axis.ticks.y=element_blank()) +
   scale_fill_manual(values=sample(ColorsDT$Color)) + labs(x="Relative Influence", y=" ") + ggtitle("Boosting 2012-2018") 
-grid.arrange(boostbonus,boostfyrri, nrow=1, top="Figure 19: Boosting comparison") 
+grid.arrange(boostbonus,boostfyrri, nrow=1, top="Figure 18: Boosting comparison") 
 ```
 
-
+As shown in figure 18, there are three variables out of the four that have higher relative importance. They are square meters of property, the year the property was bought and the age of the property. Square meters per property is by far the most important variable, which aligns with the results from before. 
 
 
