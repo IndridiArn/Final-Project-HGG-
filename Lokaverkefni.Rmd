@@ -627,9 +627,10 @@ In table 4 we see a comparison of the results between QDA and logistic regressio
 
 
 
+
 #### Random forests
 
-```{r fig.align = 'center'}
+```{r fig.align='center'}
 # randforr_MSE <- rep(NA,ncol(train.set2)-1)
 # #þessi skipun tekur um 10 min að keyra í minni tölvu. 
 # 
@@ -647,45 +648,75 @@ In table 4 we see a comparison of the results between QDA and logistic regressio
 #                                                         #==================================================================
 # randforr_MSE_calc <- abs(randforr_MSE-1)
 
-randforr_list_MSE <- c(0.1986711, 0.1682962, 0.1576649, 0.1521595, 0.1497864,0.1489321,0.1482677,0.1463692,0.1483626,0.1464642, 0.1492169, 0.1487423, 0.1510204,0.1506407, 0.1533935) # Breyturnar frá MSE calculations í Cross-Validation.    
+randforr_list_MSE <- c(0.1986711, 0.1682962, 0.1576649, 0.1521595, 0.1497864,0.1489321,0.1482677,0.1463692,0.1483626,0.1464642, 0.1492169, 0.1487423, 0.1510204,0.1506407, 0.1533935) 
 
-min.cv <- which.min(randforr_list_MSE)
-best.CV <- which.min(randforr_list_MSE)
-plot(randforr_list_MSE, type = "b",xlab = "Degree", ylab = "Test MSE", main="Figure X: Test MSE by number of variables")
-points(best.CV, randforr_list_MSE[best.CV], col = "darkred", pch = 20,cex =30)
+best.mtry <- which.min(randforr_list_MSE)
+min.testMSE <- round(0.1463692, 2)
+
+Degrees <- c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
+
+randforr_list_MSE.DF <- data.frame(Degrees, randforr_list_MSE)
+colnames(randforr_list_MSE.DF) <- c("Degrees", "TestMSE")
+
+randforr_list_MSE.DF %>% ggplot() + 
+  geom_point(aes(x = Degrees , y = TestMSE), col = "#3d2409", size = 3) + 
+  geom_point(aes(x=best.mtry, y = randforr_list_MSE[best.mtry]), shape = 10, col = "#e1923c", size = 40) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(),
+        legend.position = "none", plot.title = element_text(hjust = 0.5)) + 
+  labs(x="Degrees", y = "Test MSE") + 
+  ggtitle(expression(paste("Figure X: Test MSE by varying degrees"))) + 
+  xlim(1, 15) + 
+  ylim(0.14, 0.20)
 ```
 
+In figure X we see the test MSE by varying degrees of variables used to make the tree. The lowest test MSE can be found when using 8 variables and the corresponding test MSE is `r round(min.testMSE, 2)`.
 
 
-
-Using random Forest with the optimal mtry variable which is `r best.CV`.
-```{r fig.align = 'center'}
+```{r fig.align='center'}
+library(vip)
 #library(rpart)   # tveir tree plot pakkar 
 #library(visreg)  # Sjáum hvort það sé tími til að nota þá. 
-randforr_best <- randomForest(AgeNew~.,data=train.set2,mtry=best.CV,importance=T,ntree=500)
-pred_randforr_best <- predict(randforr_best,newdata = test.set2)
-randforr_MSE_best <- round(1-mean((pred_randforr_best==test.set2$AgeNew)),2)
+
+randforr_best <- randomForest(AgeNew ~ ., data = train.set2,
+                              mtry = best.mtry,
+                              importance = T,
+                              ntree = 500)
+
+pred_randforr_best <- predict(randforr_best,
+                              newdata = test.set2)
+
+
+#backup: min.testMSE <- round(0.1463692, 2)
 plot(randforr_best) # TODO breyta þessu plotti, ég hélt að þetta myndi ekki virka en viti menn.
 #text(randforr_best,pretty=0)
-plot(pred_randforr_best)
   
-  
-varImpPlot(randforr_best)
-randforr_MSE.perc <- percent(randforr_MSE_best)
 #visreg(randforr_best)     Er að leita að betri pakka til að plotta. 
 #autoplot(randforr_best)
+
+#which variables are most important. 
+vip(randforr_best, aesthetics = list(fill = c("#d48149","#da9566","#ca6e2f","#ad5e28","#e1a983","#e8bda0","#2e1f18",
+                                      "#462f25","#5d3f31","#904e22")),
+    mapping = aes_string(fill = "Variable")) + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(),
+        plot.title = element_text(hjust = 0.5)) + 
+  ggtitle("Figure X: Relative influence of variables using boosting") + 
+  labs(x = " ", y = "Relative influence") 
+```
+The results on figure X indicate that across all of the trees considered in the random forest, municipality is by far the most important variable when it comes to predicting the age of a property (old or new). Other important variables are number of garages, whether there is an elevator in the building and property worth. 
+
+```{r}
+kabletableRF <- table(pred_randforr_best, test.set2$AgeNew)
+rownames(kabletableRF) <- c("Old", "New")
+colnames(kabletableRF) <- c("Old", "New")
+kbl(kabletableRF) %>% 
+  kable_styling(full_width = F, position = "center") %>%
+  add_header_above(c(" " = 1, "True values" = 2)) %>% 
+  add_header_above(c("Table 4: Random forest " = 3),bold=T,font_size = 16)
+
+randforr_MSE_best <- round(1-mean((pred_randforr_best==test.set2$AgeNew)),2)
 ```
 
-
-`r randforr_MSE.perc`
-
-
-TODO : muna að breyta randomForest í forlykkjur þar sem mtry = (1:ncol(train.set2)) og hafa ntree ekki of mikið. 
-
-Using the Random forest yields a much better test MSE than the regression tree method. 
-TODO útskýra betur og bera saman við niðurstöðurnar frá QDA og LDA.
-
-
+Setja random forest í töfluna með boosting, lda og qda
 
 #### Bonus
 ```{r fig.align = 'center'}
