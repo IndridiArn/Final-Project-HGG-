@@ -522,7 +522,7 @@ boost <- com %>% ggplot(aes(Importance.y,Variable)) +
   scale_fill_manual(values=sample(ColorsDT$Color)) + labs(x="Relative Influence", y=" ") + ggtitle("Boosting") + scale_y_discrete(labels=NULL) 
 
 grid.arrange(lasso, boost, nrow=1)
-```{r}
+```
 
 FIGURE 15 er nýja BOOST og LASSO SAMAN PLOTTIÐ
 ```{r}
