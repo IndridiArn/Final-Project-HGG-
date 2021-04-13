@@ -658,7 +658,7 @@ colnames(randforr_list_MSE.DF) <- c("Degrees", "TestMSE")
 
 randforr_list_MSE.DF %>% ggplot() + 
   geom_point(aes(x = Degrees , y = TestMSE), col = "#3d2409", size = 3) + 
-  geom_point(aes(x=best.mtry, y = randforr_list_MSE[best.mtry]), shape = 10, col = "#e1923c", size = 40) +
+  geom_point(aes(x=best.mtry, y = randforr_list_MSE[best.mtry]), shape = 10, col = "#e1923c", size = 70) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(),
         legend.position = "none", plot.title = element_text(hjust = 0.5)) + 
   labs(x="Degrees", y = "Test MSE") + 
@@ -685,11 +685,6 @@ pred_randforr_best <- predict(randforr_best,
 
 
 #backup: min.testMSE <- round(0.1463692, 2)
-plot(randforr_best) # TODO breyta þessu plotti, ég hélt að þetta myndi ekki virka en viti menn.
-#text(randforr_best,pretty=0)
-  
-#visreg(randforr_best)     Er að leita að betri pakka til að plotta. 
-#autoplot(randforr_best)
 
 #which variables are most important. 
 vip(randforr_best, aesthetics = list(fill = c("#d48149","#da9566","#ca6e2f","#ad5e28","#e1a983","#e8bda0","#2e1f18",
