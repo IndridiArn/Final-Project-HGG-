@@ -410,7 +410,7 @@ r2.lasso <- percent(1-mean((lasso.pred.[,1]-test$nuvirdi)^2)/mean((mean(test$nuv
 r2train.lasso <- percent(lasso.mod$dev.ratio)
 ```
 
-  Figure 12 shows the `r nrow(haha)` predictors that Lasso deemed influental regarding property worth. The bottom seven variables have a negative relationship with property worth while the remaining have a positive relationship.  
+  Figure 12 shows the `r nrow(vi(lasso.mod))` predictors that Lasso deemed influental regarding property worth. The bottom seven variables have a negative relationship with property worth while the remaining have a positive relationship.  
 
   The model explained around `r r2.lasso` of property worth variance ($R^2$). With training error around `r lasso.trainmse` m.ISK and test error around `r lassomse.` m.ISK. 
 
