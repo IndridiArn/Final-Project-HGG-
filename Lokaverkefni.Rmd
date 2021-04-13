@@ -500,7 +500,7 @@ rmse.boost <- log10(sqrt(BOOST.test.MSE))
 
 As shown in figure 14, there are three variables that have higher relative importance. They are square meters of property, the year the property was bought and the age of the property. Square meters per property is by far the most important variable. In figures 5 and 8 in the exploratory analysis we learned that the more square meters are in a property the more it is worth and that property worth increases the younger the property is. 
 
-```{r}
+```{r fig.align='center'}
 library(Metrics)
 
 lasso.testMSE <- log10(round((mean(lasso.pred.[,1])^2),2))
