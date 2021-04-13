@@ -491,7 +491,7 @@ boost <- vip(gbm_tree_final, aesthetics = list(fill = c("#d48149","#da9566","#ca
 boost + ggtitle("Figure 14: Relative influence of variables using boosting") 
 
 #What is the test MSE
-BOOST.test.MSE <- log10(round(mean((NewBoost.predict - test.set$nuvirdi)^2), 2))
+BOOST.test.MSE <- log10(round(mean((NewBoost.predict - test.set$Prop.Worth)^2), 2))
 
 # Reiknað út RMSE
 
@@ -526,8 +526,8 @@ grid.arrange(lasso, boost, nrow=1)
 
 FIGURE 15 er nýja BOOST og LASSO SAMAN PLOTTIÐ
 ```{r}
-tafla <- data.frame(Boosting <- c(MSE=round(BOOST.test.MSE, 3),
-          RMSE=round(rmse.boost, 3),
+tafla <- data.frame(Boosting <- c(MSE=round(BOOST.test.MSE, 2),
+          RMSE=round(rmse.boost, 2),
           Variables="10"),
           Lasso <- c(MSE=round(lasso.testMSE, 2),
            RMSE=round(lasso.RMSE, 2),
