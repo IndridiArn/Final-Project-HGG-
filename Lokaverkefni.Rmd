@@ -587,17 +587,17 @@ QDA.pred <- predict(QDA.fit, test.set2)
 # Lets look at the confusion matrix for LDA to see how well the LDA fit works with the test.set
 kabletable <- table(QDA.pred$class,test.set2$AgeNew)
 rownames(kabletable) <- c("Old", "New")
-colnames(kabletable) <- c("Old", "New")
-kbl(kabletable) %>% 
+colnames(kabletable) <- c("Old","New")
+kbl(kabletable,booktabs=T) %>% 
   kable_styling(full_width = F, position = "center") %>%
-  add_header_above(c(" " = 1, "True values" = 2)) %>%
-  group_rows("Predicted", 1, 2) #ekki nógu gott 
+  add_header_above(c(" ","True values" = 2),bold=T)  %>% 
+  add_header_above(c("Table 2: Quadratic discrimnant analysis" = 3),bold=T,font_size = 16)
 
 meanQDA <- round(1-(mean(QDA.pred$class == test.set2$AgeNew)), 2)
 meanQDAperc <- percent(meanQDA)
 ```
 
-LAGA þessa ógeðslegu TÖFLU: Vantar (1) Row header, (2) Litaþemað, (3) Endurskýra 0 = Old, 1 = New. (4) Gera True values að subtitle header og bæta við main header sem heitir t.d. "Table X. True and predicted values for age of buildings".
+
 
 The test error rate of the LDA model is  `r meanQDA`, meaning the model predicted incorrectly nearly  `r meanQDAperc` of the time. 
 Umfjöllun hér um false positive og false negative rate (sjá glósur).
@@ -611,20 +611,20 @@ LOG.prob <- predict(LOG.fit, newdata = test.set2,
                     type = "response")
 LOG.pred <- rep(0, nrow(test.set2))
 LOG.pred[LOG.prob > 0.5] <- 1 #define values as 1 (new property) if probs are above 0.5. 
+
 kabletable2 <- table(LOG.pred, test.set2$AgeNew)
 rownames(kabletable2) <- c("Old", "New")
 colnames(kabletable2) <- c("Old", "New")
 kbl(kabletable2) %>% 
   kable_styling(full_width = F, position = "center") %>%
-  add_header_above(c(" " = 1, "True values" = 2))
+  add_header_above(c(" " = 1, "True values" = 2)) %>% 
+  add_header_above(c("Table 3: Logistic Regression" = 3),bold=T,font_size = 16)
+  
 meanLOG <- round(1-(mean(LOG.pred == test.set2$AgeNew)), 2)
 meanLOGperc <- percent(meanLOG)
 
 detach("package:MASS", unload=TRUE)
 ```
-LAGA TÖFLU HÉR LÍKA. 
-
-Bæta við umfjöllun um hvaða breytur eru marktækar?
 
 The test error rate of the LDA model is  `r meanLOG`, meaning the model predicted incorrectly nearly  `r meanLOGperc` of the time. Similar result to that of QDA.   
 
@@ -636,9 +636,10 @@ old <- data.frame(QDA = c(paste0(round(sum(diag(kabletable))/sum(kabletable)*100
          row.names = c("Accuracy","True negatives", "False positives", "False negatives", "True positives"))
 old %>%
   kable() %>%
-  kable_styling(full_width = F)
+  kable_styling(full_width = F) %>% 
+ add_header_above(c("Table 4: Comparison of QDA and LR" = 3),bold=T,font_size = 16)
 ```
-
+TODO :Vantar túlkun hingað inn 
 
 #### Bonus
 ```{r}
