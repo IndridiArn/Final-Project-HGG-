@@ -272,7 +272,8 @@ We will start by doing a factor analysis of the dataset to get a better idea of 
 #### Factor analysis
 ```{r}
 set.seed(4)
-blabb <- data %>% select(-matssvaedi, -fermetraverd)
+colnames(data) <- as.list(var.labels[match(names(data),names(var.labels))])
+blabb <- data %>% select(-Neighbourhood)
 library(FactoMineR)
 library(factoextra)
 #res.famd1 <- FAMD(data, sup.var=data$Prop.Worth, graph=F, ncp=10)
@@ -339,7 +340,6 @@ ba %>%
 #### The lasso
 
 ```{r, fig.align = 'center'}
-colnames(blabb) <- as.list(var.labels[match(names(blabb), names(var.labels))])
 x <- model.matrix(Prop.Worth~., blabb)[,-1]
 grid <- 10^seq(4,-1, length.out = 10)
 train <- sample(1:nrow(x),nrow(x)*0.7)
@@ -440,8 +440,7 @@ In Figure 12 we see the relationship between lasso´s predicted values and obser
 
 ```{r}
 set.seed(1)
-datam <- data %>% select(-matssvaedi, -fermetraverd)
-colnames(datam) <- as.list(var.labels[match(names(datam), names(var.labels))])
+datam <- data %>% select(-Neighbourhood)
 TRAIN <- sample(1:nrow(datam), nrow(datam)*0.7)
 train.set <- datam[TRAIN,]
 test.set <- datam[-TRAIN,]
@@ -538,8 +537,8 @@ We will use quadratic discriminant analysis (QDA), logistic regression and rando
 ```{r}
 # Búum til nýtt gagnasafn. Breytum breytunni AGE í factor breytu. Tekur gildið 1 = ný bygging, 0 = gömul bygging. Út frá miðgildi AGE. 
 set.seed(1)
-data2 <- data %>% mutate(AgeNew = (ifelse(age < 32, 1, 0))) %>% 
-  select(-age, -matssvaedi, -fermetraverd) %>%
+data2 <- data %>% mutate(AgeNew = (ifelse(Age < 32, 1, 0))) %>% 
+  select(-Age, -Neighbourhood) %>%
   mutate_at("AgeNew", factor)
   # sjá colSums(is.na(data)) 
 #Skiptum aftur í training og test set. 
