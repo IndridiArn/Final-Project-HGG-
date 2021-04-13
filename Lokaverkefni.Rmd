@@ -118,9 +118,9 @@ neigh <- data %>%
   summarise(mean = mean(nuvirdi))
 ```
 
-Figure 1 shows the distribution of property worth based on the municipality on one hand, and neighbourhood on the other. They are mostly right skewed. The highest average property worth are in Seltjarnarnes ($\mu \approx$ 52 m.ISK), Garðabær ($\mu \approx$ 49 m.ISK). The lowest in Hafnarfjörður ($\mu \approx$ 35 m.ISK) and Reykjavík ($\mu \approx$ 35 m.ISK). 
+Figure 1 shows the distribution of property worth based on the municipality on one hand, and neighbourhood on the other. They are mostly right skewed. The highest valued properties on average are in Seltjarnarnes ($\mu \approx$ 52 m.ISK), Garðabær ($\mu \approx$ 49 m.ISK). The lowest in Hafnarfjörður ($\mu \approx$ 35 m.ISK) and Reykjavík ($\mu \approx$ 35 m.ISK). 
 
-  The distribution for Seltjarnarnes differs from the rest in both graphs. It is the only multimodal distribution compared to the other municipalities, and has a flatter curve compared to the other neighbourhoods. The property worths in the Flatir neighbourhood in Garðabær is the only left-skewed distribution.   
+  The distribution for Seltjarnarnes differs from the rest in both graphs. It is the only variable that has a multimodal distribution of property worth compared to the other municipalities. It also has a flatter curve compared to the other municipalities. The property worth in the Flatir neighbourhood in Garðabær is the only left-skewed distribution.   
   
   Properties with the highest average worth, based on neighbourhoods, are in Flatir ($\mu \approx$ `r round(max[2]/1e3,2)` m.ISK) and the lowest are located outside the urbanized area of Kópavogur ($\mu \approx$ `r round(min[2]/1e3,2)` m.ISK). 
   
@@ -137,7 +137,7 @@ data %>%
   ggtitle("Figure 2: Property worth by year of sale")
 ```
 
-Figure 2 shows a gradual increase in property worths, and their variability, over the years. The average property worth over the years 2012 to 2018 is approximately 37 m.ISK. This 
+Figure 2 shows a gradual increase in both property worth as well as variability of property worth over the years. The average property worth over the years 2012 to 2018 is approximately 37 m.ISK. This 
 
 ```{r, fig.align = 'center'}
 #(4)fj breytunar
@@ -167,7 +167,7 @@ grid.arrange(ff(data$fjstof) +
                labs(y = "Rooms", x = " ")+q, nrow=1)
 ```
 
-Figure 3 shows property worth based on various elements. In general, these elements seem to have a positive linear relationship with property worth. Where number of living rooms, storage rooms and rooms, seem to be an exception where the relationship has a clear curve.
+Figure 3 shows property worth based on various elements. In general, these elements seem to have a positive linear relationship with property worth. However, number of living rooms, storage rooms and rooms, seem to be an exception as the relationship between these variables has a clear curve.
 
 ```{r, fig.align = 'center'}
 #(5)íbuðir með/án lyftu (bara fjölbýlishús)
@@ -189,7 +189,7 @@ data %>% filter(ibteg == 0) %>%
   annotate(geom="text", y=20,x="Hafnarfjordur", label= "+8%", col="white")+ annotate(geom="text", y=20,x="Mosfellsbaer", label="+13%", col="white")
 ```
 
-Figure 4 shows the average apartment worth, in each municipality, based on whether there is an elevator or not. Apartments in buildings with an elevator are on average worth more. The percentages on the plot represent the increase in worth for having an elevator in the building. Seltjarnarnes is the only municipality where having an elevator does not increase the apartment worth.  
+Figure 4 shows the average apartment worth, in each municipality, based on whether there is an elevator or not. Apartments in buildings with an elevator are on average worth more. The percentages on the plot represent the increase in worth for having an elevator in the building. Seltjarnarnes is the only municipality where having an elevator does not increase apartments' worth.  
 
 ```{r, fig.align = 'center'}
 # verð út frá aldri byggingar og tegund húsnæðis.
@@ -697,6 +697,7 @@ In table 4 we see a comparison of the results between QDA, logistic regression a
 ## Bonus
 
 In this part of the analysis we carry out an analysis of a dataset containing information about real estates sold in Iceland in 2019 and 2020. The variable current property worth was calculated based on property worth in 2021. 
+Only four variables in the new dataset overlapped with the variables our old dataset. They are square meters, year of sale, age of property and number of parking spaces. 
 
 The model via boosting was chosen the best model and will be performed here to predict property worth on the new dataset. 
 
@@ -787,7 +788,9 @@ BOOST.test.MSE <- log10(round(mean((NewBoost.predict - test.set$Prop.Worth)^2), 
 
 rmse.boost <- log10(sqrt(BOOST.test.MSE))
 ```
+We ran cross-validation on multiple combinations of trees (using the old data set) using only the variables that overlapped in both data sets. Tuning the parameters resulted in a model with 100 boosting iterations (n.trees = 100), a max tree depth of five (interaction depth = 5), and a λ of 0.125. The minimum terminal node size was kept constant at 10.
 
+<<<<<<< HEAD
 ```{r}
 boost22 <- vi(gbm_tree_final)
 booooo <- merge(boos, boost22, by="Variable")
@@ -809,3 +812,7 @@ boostfyrri <- booooo %>% ggplot(aes(Importance.x,Variable,
 grid.arrange(boostbonus,boostfyrri, nrow=1, top="Figure 19: Boosting comparison") 
 ```
 
+=======
+
+As shown in figure 16, there are three variables out of the four that have higher relative importance. They are square meters of property, the year the property was bought and the age of the property. Square meters per property is by far the most important variable, which aligns with the results from before. 
+>>>>>>> 3e1ba3512416d03db4c4efbfc666aadaf0700e04
