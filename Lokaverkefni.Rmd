@@ -625,6 +625,67 @@ old %>%
 ```
 In table 4 we see a comparison of the results between QDA and logistic regression. The two methods have very similar results, although the percentage of false negatives is slightly (still noticably) higher for QDA. 
 
+
+Finding out the optimal mtry value for random forrest 
+```{r}
+# randforr_MSE <- rep(NA,ncol(train.set2)-1)
+# #þessi skipun tekur um 10 min að keyra í minni tölvu. 
+# 
+# for (i in 1:(ncol(train.set2)-1)) {
+#   randforr_cs <- randomForest(AgeNew~.,data=train.set2,mtry=i,importance=T)
+#   pred_randforr <- predict(randforr_cs,newdata = test.set2)
+#   randforr_MSE[i] <- mean((pred_randforr==test.set2$AgeNew))
+#   
+#   print("Höfum keyr í gegn")
+#   print(i)
+#   print("sinnum")
+#                                                         #==================================================================
+# }                                                       #Þetta er cross validation fallið en það tekur ár og öld að keyra
+#randforr_MSE                                             #Uncomment at your own risk !!!!!!!!!!
+#                                                         #==================================================================
+# randforr_MSE_calc <- abs(randforr_MSE-1)
+
+randforr_list_MSE <- c(0.1986711, 0.1682962, 0.1576649, 0.1521595, 0.1497864,0.1489321,0.1482677,0.1463692,0.1483626,0.1464642, 0.1492169, 0.1487423, 0.1510204,0.1506407, 0.1533935) # Breyturnar frá MSE calculations í Cross-Validation.    
+
+min.cv <- which.min(randforr_list_MSE)
+best.CV <- which.min(randforr_list_MSE)
+plot(randforr_list_MSE, type = "b",xlab = "Degree", ylab = "Test MSE", main="Test MSE by number of variables")
+points(best.CV, randforr_list_MSE[best.CV], col = "darkred",pch = 10,cex =30)
+```
+
+
+
+
+Using random Forest with the optimal mtry variable which is `r best.CV`.
+```{r}
+#library(rpart)   # tveir tree plot pakkar 
+#library(visreg)  # Sjáum hvort það sé tími til að nota þá. 
+randforr_best <- randomForest(AgeNew~.,data=train.set2,mtry=best.CV,importance=T,ntree=500)
+pred_randforr_best <- predict(randforr_best,newdata = test.set2)
+randforr_MSE_best <- round(1-mean((pred_randforr_best==test.set2$AgeNew)),2)
+plot(randforr_best) # TODO breyta þessu plotti, ég hélt að þetta myndi ekki virka en viti menn.
+#text(randforr_best,pretty=0)
+plot(pred_randforr_best)
+  
+  
+varImpPlot(randforr_best)
+randforr_MSE.perc <- percent(randforr_MSE_best)
+#visreg(randforr_best)     Er að leita að betri pakka til að plotta. 
+#autoplot(randforr_best)
+```
+
+
+`r randforr_MSE.perc`
+
+
+TODO : muna að breyta randomForest í forlykkjur þar sem mtry = (1:ncol(train.set2)) og hafa ntree ekki of mikið. 
+
+Using the Random forest yields a much better test MSE than the regression tree method. 
+TODO útskýra betur og bera saman við niðurstöðurnar frá QDA og LDA.
+
+
+
+
 #### Bonus
 ```{r}
 bonusdataserbyli <- read.csv("bonusdataserbyli.csv")
