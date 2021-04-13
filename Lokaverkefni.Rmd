@@ -43,11 +43,11 @@ library(grid)
 ```
 
 ## Introduction 
-In this assignment we carry out an analysis of a dataset containing information of about 40 thousand real estates sold in Iceland from 2008 to 2018. The origin of the data can be traced to the National Registry of Iceland which performs an evaluation of properties' worth every year. The data is from 2019 so the current property worth will be referred to simply as property worth. 
+In this assignment we carry out an analysis of a dataset containing information of about 40 thousand real estates sold in Iceland from 2008 to 2018. The origin of the data can be traced to the National Registry of Iceland which performs an evaluation of properties worth every year. The data is from 2019 so the current property worth will be referred to simply as property worth. 
 
   The first part will explore the data visually. The second part will predict properties worth using the lasso and boosting methods. The third part will predict whether a property is old or new using QDA, logistic regression and random forest. Stick around to see if we cracked the bonus question... 
 
-The original dataset was very high dimensional. Irrelevant variables and observations were excluded. Focus will be on data concerning single-family houses and apartment building located in the Capital Region of Iceland. The resulting dataset contains approximately 35 thousand observations and 17 variables regarding properties worth, municipality, age of construction, property type and property area among other. The dataset is subject to change as analysis progresses.      
+The original dataset was very high dimensional. Irrelevant variables and observations were excluded. Focus will be on data concerning single-family houses and apartment building located in the Capital Region of Iceland. The resulting dataset contains approximately 35 thousand observations and 17 variables regarding properties worth, municipality, age of construction, property type and property area among other.
 
 ## Reading data and cleanup
 ```{r}
@@ -76,7 +76,7 @@ data$matssvaedi <- recode_factor(data$matssvaedi, `11`="Rvk:Vesturbær", `20` = 
 library(Hmisc)
 var.labels <- c(nuvirdi = "Property Worth", lyfta="Elevator", ibm2 = "Sqm", fjhaed = "Floors", fjbilsk = "Parking", fjbkar = "Bathtubs", fjsturt = "Showers", fjklos="Toilets", fjeld = "Kitchens", fjherb="Rooms", fjstof = "Living Rooms", fjgeym = "Storage", matssvaedi = "Neighbourhood", ibteg = "Prop. Type", svfn = "Municipality", yearkeypt = "Salesyear", age = "Age", fermetraverd = "Price per Sqm", svfnMosfellsbaer = "Mosfellsbær", svfnHafnarfjordur = "Hafnarfjörður", svfnSeltjarnarnes = "Seltjarnarnes", svfnGardabaer = "Garðabær", svfnKopavogur = "Kópavogur", ibteg1 = "Single-family property", ibteg0 = "Apartment", lyfta1 = "Elevator present", lyfta0 = "No elevator")
 
-var.labels2 <- c(nuvirdi = "Property Worth", lyfta="Elevator", ibm2 = "Sqm", fjhaed = "Floors", fjbilsk = "Parking", fjbkar = "Bathtubs", fjsturt = "Showers", fjklos="Toilets", fjeld = "Kitchens", fjherb="Rooms", fjstof = "Living Rooms", fjgeym = "Storage", matssvaedi = "Neighbourhood", ibteg = "Prop. Type", svfn = " ", yearkeypt = "Salesyear", age = "Age", fermetraverd = "Price per Sqm", svfnMosfellsbaer = "Mosfellsbær", svfnHafnarfjordur = "Hafnarfjörður", svfnSeltjarnarnes = "Seltjarnarnes", svfnGardabaer = "Garðabær", svfnKopavogur = "Kópavogur", ibteg1 = "Single-family property", ibteg0 = "Apartment", lyfta1 = "Elevator present", lyfta0 = "No elevator")
+var.labels2 <- c(nuvirdi = "Property Worth", lyfta="Elevator", ibm2 = "Sqm", fjhaed = "Floors", fjbilsk = "Parking", fjbkar = "Bathtubs", fjsturt = "Showers", fjklos="Toilets", fjeld = "Kitchens", fjherb="Rooms", fjstof = "Living Rooms", fjgeym = "Storage", matssvaedi = "Neighbourhood", ibteg = "Prop. Type", yearkeypt = "Salesyear", age = "Age", fermetraverd = "Price per Sqm", svfnMosfellsbaer = "Mosfellsbær", svfnHafnarfjordur = "Hafnarfjörður", svfnSeltjarnarnes = "Seltjarnarnes", svfnGardabaer = "Garðabær", svfnKopavogur = "Kópavogur", ibteg1 = "Single-family property", ibteg0 = "Apartment", lyfta1 = "Elevator present", lyfta0 = "No elevator")
 ```
 
 ## Part I: Exploratory Analysis
@@ -137,7 +137,7 @@ data %>%
   ggtitle("Figure 2: Property worth by year of sale")
 ```
 
-Figure 2 shows a gradual increase in property worths, and their variability, over the years. The average property worth over the years 2012 to 2018 is approximately 37 m.ISK. 
+Figure 2 shows a gradual increase in property worths, and their variability, over the years. The average property worth over the years 2012 to 2018 is approximately 37 m.ISK. This 
 
 ```{r, fig.align = 'center'}
 #(4)fj breytunar
@@ -167,7 +167,7 @@ grid.arrange(ff(data$fjstof) +
                labs(y = "Rooms", x = " ")+q, nrow=1)
 ```
 
-Figure 3 shows property worth based on various elements. In general, these elements seem to have a positive linear relationship with property worth. Where number of living rooms, storage rooms and rooms, seem to be an exception the relationship between these variables has a clear curve.
+Figure 3 shows property worth based on various elements. In general, these elements seem to have a positive linear relationship with property worth. Where number of living rooms, storage rooms and rooms, seem to be an exception where the relationship has a clear curve.
 
 ```{r, fig.align = 'center'}
 #(5)íbuðir með/án lyftu (bara fjölbýlishús)
@@ -192,20 +192,22 @@ data_fjolbylishus %>%
   labs(x = " ", y = "Apartment worth") + annotate(geom="text", y=20,x="Reykjavik", label= paste("+",tt[1]), col="white")+ annotate(geom="text", y=20,x="Kopavogur", label= paste("+",tt[2]), col="white")+ annotate(geom="text", y=20,x="Seltjarnarnes", label= paste("+",tt[3]), col="white")+ annotate(geom="text", y=20,x="Gardabaer", label= paste("+",tt[4]), col="white")+ annotate(geom="text", y=20,x="Hafnarfjordur", label= paste("+",tt[5]), col="white")+ annotate(geom="text", y=20,x="Mosfellsbaer", label= paste("+",tt[6]), col="white")
 ```
 
-Figure 4 shows the average apartment worth, in each municipality, based on whether there is an elevator or not. Apartments in buildings with an elevator are on average worth more. The percentages on the plot represent the increase in worth for having an elevator in the building. Seltjarnarnes is the only municipality where having an elevator does not increase the apartments' worth.  
+Figure 4 shows the average apartment worth, in each municipality, based on whether there is an elevator or not. Apartments in buildings with an elevator are on average worth more. The percentages on the plot represent the increase in worth for having an elevator in the building. Seltjarnarnes is the only municipality where having an elevator does not increase the apartment worth.  
 
 ```{r, fig.align = 'right'}
 # verð út frá aldri byggingar og tegund húsnæðis.
-f3 <- data %>% 
-  mutate(ibteg=ifelse(data$ibteg == 1, "Single-family house", "Apartment building"))
-ggplot(f3, aes(x=nuvirdi/1e3,y=age, group = ibteg, color = ibteg)) +
+data %>% 
+  mutate(ibteg=ifelse(data$ibteg == 1, "Single-family house", "Apartment building")) %>%
+  ggplot(aes(x=nuvirdi/1e3,y=age, group = ibteg, color = ibteg)) +
   geom_smooth() + 
   ggtitle("Figure 5: Property worth based on age and type") +
-  labs(x = "Property worth", y = "Age of property") + 
+  labs(x = "Worth", y = "Age") + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), 
-        plot.title = element_text(hjust = 0.5)) +
+        plot.title = element_text(hjust = 0.5),
+        legend.position = "top") +
    scale_x_continuous(labels = label_number(suffix = " m.ISK"), limits=c(0,100), breaks=seq(0,100,by=25)) + 
-    scale_color_manual(name = "Type of property",values = sample(ColorsDT$Color))
+  scale_y_continuous(labels = label_number(suffix = " years"), limits=c(0,100), breaks=seq(0,100,by=25)) + 
+    scale_color_manual(name = "Type",values = sample(ColorsDT$Color))
 ```
 
 Figure 5 shows the average property worth based on age and type. As expected, single-family houses are on average worth more than apartment buildings and the property worth decreases with as it ages. Age appears to become irrelevant for single-family houses worth 50 m.ISK and above.   
@@ -216,7 +218,7 @@ data <- data %>%
   mutate(fermetraverd = nuvirdi/ibm2)
 ggplot(data, aes(x = fermetraverd, y = svfn, fill = svfn)) +
   geom_density_ridges_gradient() +
-  labs(x= "Worth per square meter", y = "Municipality") +
+  labs(x= "Worth per square meter", y = " ") +
   ggtitle("Figure 6: Worth per square meter by municipality") + 
   theme(plot.title = element_text(hjust = 0.5)) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
@@ -226,9 +228,9 @@ ggplot(data, aes(x = fermetraverd, y = svfn, fill = svfn)) +
   xlim(c(0, 1000))
 ```
 
-Figure 6 shows property worth per square meter by municipality. Property worth per square meter is a bit higher for properties in Garðabær and Seltjarnarnes (and Mosfellsbær to a degree) than it is for properties in the other municipalities. 
+Figure 6 shows property worth per square meter by municipality. Worths per square meter are a bit higher for properties in Garðabær and Seltjarnarnes (and Mosfellsbær to a degree) than for properties in the other municipalities. 
 
-```{r fig.align = 'center'}
+```{r}
 # fjölbýli vs einbýli eftir municipality. Figure 7
 data7 <- data %>%
   mutate(ibteg = ifelse(data$ibteg == 1, "Single-family house", "Apartment building"))%>%
@@ -249,7 +251,7 @@ data7 %>%
   geom_bar(stat= "identity", position = "dodge") +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         panel.background = element_blank(), legend.position = c(0.7,0.7) ,
-      legend.direction = "horizontal", plot.title = element_text(hjust = 0.5)) + 
+      legend.direction = "horizontal") + 
   ggtitle("Figure 7: Property type by municipality") +
   scale_fill_manual(name = "Property type", values=sample(ColorsDT$Color)) + 
   labs(x = " ", y = "Total") + ylim(0, 17000) + 
@@ -263,7 +265,7 @@ data7 %>%
 
 Figure 7 shows the split of property types for each municipality. The plot shows the percentage of apartment buildings.   
 
-```{r fig.align = 'center'}
+```{r}
 #Corrplot allar numeric breytur
 da <- data %>%
   dplyr::select(where(is.numeric))
@@ -274,14 +276,12 @@ corrplot.mixed(cor(da), lower.col = "#d88121", number.cex=0.7, tl.pos = "lt", up
 
 Figure 8 shows correlation of all numeric (14) property elements of the dataset. Property worth has a moderately strong positive correlation with the size of properties (in square meters), year of sale and number of rooms, living rooms, floors, showers and toilets in a property. 
 
-The last five elements mentioned here above also appear to have a moderately strong postive relationship with each other. 
+The last five attributes mentioned here above also appear to have a moderately strong postive relationship with each other. 
 
 ## Part II: Predicting property worth
 
 In this part we will predict sale worths using the lasso and boosting methods. 
 We will start by doing a factor analysis of the dataset to get a better idea of its nature. 
-
-#### Factor analysis
 ```{r}
 set.seed(4)
 blabb <- data %>% select(-matssvaedi, -fermetraverd)
@@ -428,18 +428,15 @@ lassomse. <- round(mean(lasso.pred.[,1])/1e3,2)
 r2.lasso <- percent(1-mean((lasso.pred.[,1]-test$nuvirdi)^2)/mean((mean(test$nuvirdi)-test$nuvirdi)^2))
 #train R squared
 r2train.lasso <- percent(lasso.mod$dev.ratio)
-
-lasso.newTrainingMSE <- log10(round(mean((lasso.pred[,1])^2),2))
-lasso.newTestMSE <- log10(round(mean((lasso.pred.[,1])^2),2))
 ```
 
-  Figure 12 shows the `r nrow(haha)` predictors that Lasso deemed influental regarding property worth. The bottom seven variables have a negative relationship with property worth while the remaining have a positive relationship. The variables Seltjarnarnes, number of floors, year the property was bought, Garðabær, Hafnarfjörður and number of garages are the most influential according to the lasso.   
+  Figure 12 shows the `r nrow(haha)` predictors that Lasso deemed influental regarding property worth. The bottom seven variables have a negative relationship with property worth while the remaining have a positive relationship.  
 
-  The model explained around `r r2.lasso` of property worth variance ($R^2$). With training error around log10(`r round(lasso.newTrainingMSE, 2)`) and test error around log10(`r round(lasso.newTestMSE, 2)`).
+  The model explained around `r r2.lasso` of property worth variance ($R^2$). With training error around `r lasso.trainmse` m.ISK and test error around `r lassomse.` m.ISK. 
 
-  In alignment with the factor analysis, the municipality regions do seem influential for property worth as seperate predictors. Additionally, number of toilets and bathtubs seem to have similar effect on property worth and might be considered as a singular predictor as noted earlier.
+  In alignment with the factor analysis, the municipality regions do seem influential for property worth as seperate predictors. Additionally, number of toilets and bathtubs seem to have similar effect on property pricing and might be considered as a singular predictor as noted earlier.
   
-  The main issue with Lasso are correlated/confounding variables. As seen earlier (see Figure 10) square meters (size of property) came in second when it comes to explaining variance in the data. In figure 12 this variable (size) is included but its coefficient has been reduced almost to zero. Meanwhile, all the variables from the first dimension of the factor analysis appear to also be included here. Lasso is blind to the influence of square meter on property worth (due to high correlation) and it is important to keep that in mind and not exclude the effect that square meter has on property worth
+  The main issue with Lasso are correlated/confounding variables. As seen earlier (see Figure 10) square meter explained the second most data variance. Here we see that variable is included but rather low, however all the variables from the first dimension of the factor analysis are also included here. Since Lasso is blind to their influence on each other it is important to keep that in mind and not exclude the effect that square meter might have on property worth. 
   
 ```{r, fig.align = 'center'}
 gaga <- cbind(lasso.pred,y)
@@ -462,15 +459,15 @@ scale_x_continuous(labels = label_number(suffix = " m.ISK"), limits=c(0,150),bre
 grid.arrange(g2,g1, nrow=1,top="Figure 10: Lasso predicted versus observed property worths", bottom="Predicted", left="Observed")
 ```
 
-In Figure 13 we see the relationship between lassos' predicted values and observed values. The right graph includes all values in the data set and we appear to have an extreme value at the top of the plot. 
-  The left graph is a close-up of all the values excluding the extreme value. The relationship seems stronger for properties of lower worth but starts to gradually worsen as the worth goes up.
+In Figure 13 we see the relationship between lasso´s predicted values and observed values. The right graph includes all values in the data set and we appear to have an extreme value at the top of the plot. 
+  The left graph is a close-up of all the values excluding the extreme value. The relationship seems stronger for lower worthd properties but starts to gradually worsen as the worth goes up.
 
 #### Boosting
 
 ```{r}
 set.seed(1)
 datam <- data %>% select(-matssvaedi, -fermetraverd)
-colnames(datam) <- as.list(var.labels2[match(names(datam), names(var.labels2))])
+#colnames(datam) <- as.list(var.labels2[match(names(datam), names(var.labels2))])
 TRAIN <- sample(1:nrow(datam), nrow(datam)*0.7)
 train.set <- datam[TRAIN,]
 test.set <- datam[-TRAIN,]
@@ -479,7 +476,7 @@ trainctrl <- trainControl(method = "repeatedcv", number = 5)
 
 myBestGrid2 <- data.frame("n.trees" = 500,"interaction.depth"= 10,"shrinkage"=0.1,"n.minobsinnode"=10)
 
-gbm_tree_final <- train(`Property Worth` ~ ., data = train.set, 
+gbm_tree_final <- train(nuvirdi ~ ., data = train.set, 
                         method="gbm", 
                         distribution = "gaussian", 
                         trControl = trainctrl, 
@@ -487,6 +484,7 @@ gbm_tree_final <- train(`Property Worth` ~ ., data = train.set,
                         tuneGrid = myBestGrid2)
 
 ```
+
 We ran cross-validation on multiple combinations of trees. 
 Tuning the parameters resulted in a model with 500 boosting iterations (n.trees = 500), a max tree depth of ten (interaction depth = 10), and a $\lambda$ of 0.1. The minimum terminal node size was kept constant at 10. 
 
@@ -516,33 +514,73 @@ BOOST.test.MSE <- round(mean((NewBoost.predict - test.set$nuvirdi)^2), 2)
 rmse.boost <- sqrt(BOOST.test.MSE)
 ```
 
-LAGA: vantar nöfn á ásana. Mikið vesen. Hvernig best að gera? 
+```{r}
+lassovar <- haha %>%
+  mutate(Value = as.numeric(Value),
+         value = as.numeric(value),
+         col = ifelse(value>=0, "Positive", "Negative")) %>%
+  ggplot(aes(Value, reorder(rownames(haha),Value),
+             col = col)) +
+  geom_point(size = 3)+ 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        panel.background = element_blank(), legend.position = "top") + 
+  scale_color_manual(values=sample(ColorsDT$Color)) + labs(x="Coefficient", y=" ", col="Relationship with property worth:") + ggtitle(expression(paste("Figure 9: Predictors with non-zero Lasso coefficients with ", lambda, " = 0.36")))
+
+
+
+vip(gbm_tree_final, aesthetics = list(fill = c("#d48149","#da9566","#ca6e2f","#ad5e28","#e1a983","#e8bda0","#2e1f18",
+                                      "#462f25","#5d3f31","#904e22")),
+    mapping = aes_string(fill = "Variable")) + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(),
+        plot.title = element_text(hjust = 0.5)) + 
+  ggtitle("Figure 15: Relative influence of variables using boosting") + 
+  labs(x = " ", y = "Relative influence") 
+
+```
 
 As shown in figure 15, there are three variables that have higher relative importance. They are square meters of property, the year the property was bought and the age of the property. Square meters per property is by far the most important variable. In figures 5 and 8 in the exploratory analysis we learned that the more square meters are in a property the more it is worth and that property worth increases the younger the property is. 
 
 
+LAGA. BERGRÓS, ég bjó til nýja töflu fyrir neðan þessa. Hún meikar mjög mikið sense. 
+```{r}
+tafla <- data.frame(Boosting <- c(MSE=paste0(round(BOOST.test.MSE/1e6,2)," m.ISK"),
+          RMSE=paste0(round(rmse.boost/1e3,2)," m.ISK"),
+          Variables="10"),
+          Lasso <- c(MSE=paste0(lassomse.," m.ISK"),
+           RMSE=paste0(round(rmse(lasso.pred.[1], y)/1e3,2), " m.ISK"),
+           Variables=nrow(haha)))
+colnames(tafla) <- c("Boosting","Lasso")
+t(tafla) %>%
+  kable(align="c", caption = "Table 1: Comparison of boosting and the lasso") %>%
+  kable_styling(full_width = F)
+```
+
+NÝ TAFLA með lasso og boosting þar sem mse og rmse er kóðað alveg eins. Bjó til nýjar breytur. 
+
 ```{r}
 library(Metrics)
+
 lasso.testMSE <- log10(round((mean(lasso.pred.[,1])^2),2))
 lasso.RMSE <- log10(round(sqrt(lasso.testMSE), 2))
+
 tafla <- data.frame(Boosting <- c(MSE=paste0(round(BOOST.test.MSE, 2)),
           RMSE=paste0(round(rmse.boost, 2)),
-          Variables="10",
-          Influential="3"),
+          Variables="10"),
           Lasso <- c(MSE=paste0(round(lasso.testMSE, 2)),
            RMSE=paste0(round(lasso.RMSE, 2)),
-           Variables=nrow(haha), 
-           Influential=13))
+           Variables=nrow(haha)))
 colnames(tafla) <- c("Boosting","Lasso")
 t(tafla) %>%
   kable(align="c", caption = "Table 1: Comparison of boosting and the lasso (log10)") %>%
   kable_styling(full_width = F)
 ```
 
-In table 1 we can see the results from both the lasso approach and boosting. Boosting outperforms the lasso as the test MSE and test RMSE for boosting is lower. In figure 15 we saw that there were a total of 10 variables mentioned when using the boosting method. Out of those, only 3 of them stand out as influential variables. In figure 12 we saw a total of 19 predictors with non-zero coefficients in the plot. For the sake of interpretation, we have regarded only 13 of those variables as influential based on the coefficients' distance from zero.  
+LAGA: fjölda variables í töflunni! 
+
+In table 1 we can see the results from both the lasso approach and boosting. The MSE and RMSE for boosting is lower than it is for 
 
 
-## Part III: Predicting property age (old or new)
+## Part III: Predicting whether a property is old or new
 
 Here we will predict whether a property is old or new. We've created a new binary variable: If the property age exceeds the overall median age (32 years) it is categorised as an old property, and the remaining as new properties. 
 
@@ -581,7 +619,10 @@ meanQDA <- round(1-(mean(QDA.pred$class == test.set2$AgeNew)), 2)
 meanQDAperc <- percent(meanQDA)
 ```
 
+
+
 The test error rate of the LDA model is  `r meanQDA`, meaning the model predicted incorrectly nearly  `r meanQDAperc` of the time. 
+Umfjöllun hér um false positive og false negative rate (sjá glósur).
 
 #### Logistic regression 
 ```{r}
@@ -620,74 +661,12 @@ old %>%
   kable_styling(full_width = F) %>% 
  add_header_above(c("Table 4: Comparison of QDA and LR" = 3),bold=T,font_size = 16)
 ```
-In table 4 we see a comparison of the results between QDA and logistic regression. The two methods have very similar results, although the percentage of false negatives is slightly (but still noticably) higher for QDA. 
-
-
-
-#### Random forests
-
-```{r}
-# randforr_MSE <- rep(NA,ncol(train.set2)-1)
-# #þessi skipun tekur um 10 min að keyra í minni tölvu. 
-# 
-# for (i in 1:(ncol(train.set2)-1)) {
-#   randforr_cs <- randomForest(AgeNew~.,data=train.set2,mtry=i,importance=T)
-#   pred_randforr <- predict(randforr_cs,newdata = test.set2)
-#   randforr_MSE[i] <- mean((pred_randforr==test.set2$AgeNew))
-#   
-#   print("Höfum keyr í gegn")
-#   print(i)
-#   print("sinnum")
-#                                                         #==================================================================
-# }                                                       #Þetta er cross validation fallið en það tekur ár og öld að keyra
-#randforr_MSE                                             #Uncomment at your own risk !!!!!!!!!!
-#                                                         #==================================================================
-# randforr_MSE_calc <- abs(randforr_MSE-1)
-
-randforr_list_MSE <- c(0.1986711, 0.1682962, 0.1576649, 0.1521595, 0.1497864,0.1489321,0.1482677,0.1463692,0.1483626,0.1464642, 0.1492169, 0.1487423, 0.1510204,0.1506407, 0.1533935) # Breyturnar frá MSE calculations í Cross-Validation.    
-
-min.cv <- which.min(randforr_list_MSE)
-best.CV <- which.min(randforr_list_MSE)
-plot(randforr_list_MSE, type = "b",xlab = "Degree", ylab = "Test MSE", main="Figure X: Test MSE by number of variables")
-points(best.CV, randforr_list_MSE[best.CV], col = "darkred", pch = 20,cex =30)
-```
-
-
-
-
-Using random Forest with the optimal mtry variable which is `r best.CV`.
-```{r}
-#library(rpart)   # tveir tree plot pakkar 
-#library(visreg)  # Sjáum hvort það sé tími til að nota þá. 
-randforr_best <- randomForest(AgeNew~.,data=train.set2,mtry=best.CV,importance=T,ntree=500)
-pred_randforr_best <- predict(randforr_best,newdata = test.set2)
-randforr_MSE_best <- round(1-mean((pred_randforr_best==test.set2$AgeNew)),2)
-plot(randforr_best) # TODO breyta þessu plotti, ég hélt að þetta myndi ekki virka en viti menn.
-#text(randforr_best,pretty=0)
-plot(pred_randforr_best)
-  
-  
-varImpPlot(randforr_best)
-randforr_MSE.perc <- percent(randforr_MSE_best)
-#visreg(randforr_best)     Er að leita að betri pakka til að plotta. 
-#autoplot(randforr_best)
-```
-
-
-`r randforr_MSE.perc`
-
-
-TODO : muna að breyta randomForest í forlykkjur þar sem mtry = (1:ncol(train.set2)) og hafa ntree ekki of mikið. 
-
-Using the Random forest yields a much better test MSE than the regression tree method. 
-TODO útskýra betur og bera saman við niðurstöðurnar frá QDA og LDA.
-
-
+In table 4 we see a comparison of the results between QDA and logistic regression. The two methods have very similar results, although the percentage of false negatives is slightly (still noticably) higher for QDA. 
 
 #### Bonus
 ```{r}
-bonusdataserbyli <- read.csv("https://raw.githubusercontent.com/IndridiArn/Final-Project-HGG-/main/bonusdataserbyli.csv")
-bonusdatafjolbyli <- read.csv("https://github.com/IndridiArn/Final-Project-HGG-/blob/main/bonusdataserbyli.csv")
+bonusdataserbyli <- read.csv("bonusdataserbyli.csv")
+bonusdatafjolbyli <- read.csv("bonusdatafjolbyli.csv")
 sam <- names(bonusdatafjolbyli)[names(bonusdatafjolbyli) %in% names(bonusdataserbyli)]
 bonusdataserbyli <- bonusdataserbyli %>%
   select_if(colnames(bonusdataserbyli) %in% sam)
