@@ -523,43 +523,25 @@ LAGA: vantar nöfn á ásana. Mikið vesen. Hvernig best að gera?
 As shown in figure 15, there are three variables that have higher relative importance. They are square meters of property, the year the property was bought and the age of the property. Square meters per property is by far the most important variable. In figures 5 and 8 in the exploratory analysis we learned that the more square meters are in a property the more it is worth and that property worth increases the younger the property is. 
 
 
-LAGA. BERGRÓS, ég bjó til nýja töflu fyrir neðan þessa. Hún meikar mjög mikið sense. 
-```{r}
-tafla <- data.frame(Boosting <- c(MSE=paste0(round(BOOST.test.MSE/1e6,2)," m.ISK"),
-          RMSE=paste0(round(rmse.boost/1e3,2)," m.ISK"),
-          Variables="10"),
-          Lasso <- c(MSE=paste0(lassomse.," m.ISK"),
-           RMSE=paste0(round(rmse(lasso.pred.[1], y)/1e3,2), " m.ISK"),
-           Variables=nrow(haha)))
-colnames(tafla) <- c("Boosting","Lasso")
-t(tafla) %>%
-  kable(align="c", caption = "Table 1: Comparison of boosting and the lasso") %>%
-  kable_styling(full_width = F)
-```
-
-NÝ TAFLA með lasso og boosting þar sem mse og rmse er kóðað alveg eins. Bjó til nýjar breytur. 
-
 ```{r}
 library(Metrics)
-
 lasso.testMSE <- log10(round((mean(lasso.pred.[,1])^2),2))
 lasso.RMSE <- log10(round(sqrt(lasso.testMSE), 2))
-
 tafla <- data.frame(Boosting <- c(MSE=paste0(round(BOOST.test.MSE, 2)),
           RMSE=paste0(round(rmse.boost, 2)),
-          Variables="10"),
+          Variables="10",
+          Influential="3"),
           Lasso <- c(MSE=paste0(round(lasso.testMSE, 2)),
            RMSE=paste0(round(lasso.RMSE, 2)),
-           Variables=nrow(haha)))
+           Variables=nrow(haha), 
+           Influential=13))
 colnames(tafla) <- c("Boosting","Lasso")
 t(tafla) %>%
   kable(align="c", caption = "Table 1: Comparison of boosting and the lasso (log10)") %>%
   kable_styling(full_width = F)
 ```
 
-LAGA: fjölda variables í töflunni! 
-
-In table 1 we can see the results from both the lasso approach and boosting. The MSE and RMSE for boosting is lower than it is for 
+In table 1 we can see the results from both the lasso approach and boosting. Boosting outperforms the lasso as the test MSE and test RMSE for boosting is lower. In figure 15 we saw that there were a total of 10 variables mentioned when using the boosting method. Out of those, only 3 of them stand out as influential variables. In figure 12 we saw a total of 19 predictors with non-zero coefficients in the plot. For the sake of interpretation, we have regarded only 13 of those variables as influential based on the coefficients' distance from zero.  
 
 
 ## Part III: Predicting property age (old or new)
@@ -603,8 +585,7 @@ meanQDAperc <- percent(meanQDA)
 
 
 
-The test error rate of the LDA model is  `r meanQDA`, meaning the model predicted incorrectly nearly  `r meanQDAperc` of the time. 
-Umfjöllun hér um false positive og false negative rate (sjá glósur).
+The test error rate of the QDA model is  `r meanQDA`, meaning the model predicted incorrectly nearly  `r meanQDAperc` of the time. 
 
 #### Logistic regression 
 ```{r}
@@ -630,7 +611,7 @@ meanLOGperc <- percent(meanLOG)
 detach("package:MASS", unload=TRUE)
 ```
 
-The test error rate of the LDA model is  `r meanLOG`, meaning the model predicted incorrectly nearly  `r meanLOGperc` of the time. Similar result to that of QDA.   
+The test error rate of the logistic regression model is  `r meanLOG`, meaning the model predicted incorrectly nearly  `r meanLOGperc` of the time. Similar result to that of QDA.   
 
 ```{r}
 old <- data.frame(QDA = c(paste0(round(sum(diag(kabletable))/sum(kabletable)*100),"%"),
