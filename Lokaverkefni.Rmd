@@ -662,7 +662,7 @@ vip(randforr_best, aesthetics = list(fill = c("#d48149","#da9566","#ca6e2f","#ad
   labs(x = " ", y = "Relative influence") 
 ```
 
-The results on figure X indicate that across all of the trees considered in the random forest, municipality is by far the most important variable when it comes to predicting the age of a property (old or new). Other important variables are number of garages, whether there is an elevator in the building and property worth. 
+The results on figure 17 indicate that across all of the trees considered in the random forest, municipality is by far the most important variable when it comes to predicting the age of a property (old or new). Other important variables are number of garages, whether there is an elevator in the building and property worth. 
 
 ```{r}
 kabletableRF <- table(pred_randforr_best, test.set2$AgeNew)
@@ -697,17 +697,41 @@ In table 4 we see a comparison of the results between QDA, logistic regression a
 #### Bonus
 ```{r fig.align = 'center'}
 bonusdataserbyli <- read.csv("https://raw.githubusercontent.com/IndridiArn/Final-Project-HGG-/main/bonusdataserbyli.csv")
-bonusdatafjolbyli <- read.csv("https://github.com/IndridiArn/Final-Project-HGG-/blob/main/bonusdataserbyli.csv")
+bonusdatafjolbyli <- read.csv("https://raw.githubusercontent.com/IndridiArn/Final-Project-HGG-/main/bonusdatafjolbyli.csv")
 sam <- names(bonusdatafjolbyli)[names(bonusdatafjolbyli) %in% names(bonusdataserbyli)]
 bonusdataserbyli <- bonusdataserbyli %>%
   select_if(colnames(bonusdataserbyli) %in% sam)
 bonusdatafjolbyli <- bonusdatafjolbyli %>%
   select_if(colnames(bonusdatafjolbyli) %in% sam)
 bonus <- rbind(bonusdatafjolbyli,bonusdataserbyli)
+
 bonus$utgdag <- as.Date(bonus$utgdag, format = "%m/%d/%Y")
 bonus$year <- format(bonus$utgdag, format="%Y")
 bonus$year <- as.numeric(bonus$year)
 bonus <- bonus %>%
   filter(bonus$year>2018)
+bonus <- bonus %>% select(nuvirdi, ibm2,fjbilsk,age_studull, year, hverfi)
+var.labels <- c(nuvirdi = "Prop.Worth", ibm2 = "Sqm", fjbilsk = "Parking", age_studull = "Age", bath_fixtures = "Bathrooms", year = "Salesyear", hverfi = "Neighbourhood")
+colnames(bonus) <- as.list(var.labels[match(names(bonus), names(var.labels))])
+```
+
+```{r}
+NewBoost.predict <- predict(gbm_tree_final, newdata = bonus)
+
+#which variables are most important. 
+boost <- vip(gbm_tree_final, aesthetics = list(fill = c("#d48149","#da9566","#ca6e2f","#ad5e28","#e1a983","#e8bda0","#2e1f18",
+                                      "#462f25","#5d3f31","#904e22")),
+    mapping = aes_string(fill = "Variable")) + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(),
+        plot.title = element_text(hjust = 0.5)) + 
+  labs(x = " ", y = "Relative influence") 
+boost + ggtitle("Figure 14: Relative influence of variables using boosting") 
+
+#What is the test MSE
+BOOST.test.MSE <- log10(round(mean((NewBoost.predict - test.set$Prop.Worth)^2), 2))
+
+# Reiknað út RMSE
+
+rmse.boost <- log10(sqrt(BOOST.test.MSE))
 ```
 
